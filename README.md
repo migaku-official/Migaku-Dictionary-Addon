@@ -1,7 +1,7 @@
 <h2 align="center">MIA Dictionary Addon</h2>
 
 <p align="center">
-<a title="Rate on AnkiWeb" href="https://ankiweb.net/shared/info/278530045"><img src="https://glutanimate.com/logos/ankiweb-rate.svg"></a>
+<a title="Rate on AnkiWeb" href="https://ankiweb.net/shared/info/1655992655"><img src="https://glutanimate.com/logos/ankiweb-rate.svg"></a>
 <a title="License: GNU AGPLv3" href="https://github.com/mass-immersion-approach/MIA-Japanese-Add-on/blob/master/LICENSE"><img  src="https://img.shields.io/badge/license-GNU AGPLv3-green.svg"></a>
 <br>
 <a title="Buy us a coffee :)" href="https://ko-fi.com/massimmersionapproach"><img src="https://img.shields.io/badge/ko--fi-contribute-%23579ebd.svg"></a>
@@ -27,7 +27,7 @@
 ### Installation
 
 1. Make sure you have the [latest version](https://apps.ankiweb.net/#download) of Anki 2.1 installed.
-2. Download the latest version of the addon from [AnkiWeb](https://ankiweb.net/shared/info/278530045)
+2. Download the latest version of the addon from [AnkiWeb](https://ankiweb.net/shared/info/1655992655)
 
 ### Documentation
 
