@@ -1,0 +1,1275 @@
+<!DOCTYPE html><html>
+<style>
+
+.googleCont{
+    z-index:10;
+    width:100%;
+    height:100%;  
+}
+
+.googleHighlight:hover{
+    background-color: rgba(49, 90, 255, .5);
+}
+
+.googleCont .img{
+   z-index:1;    
+}
+
+.selectedImage{
+    background-color: rgba(49, 90, 255, .5);
+}
+
+.googleHighlight{
+    width:100%;
+    height:100%;
+    position: absolute;
+    z-index: 100;
+}
+
+.forvo-play{
+    position:relative;
+    top:15px;
+    height:10px;
+    width:200px;
+    border-radius: 0px;
+}
+
+.forvo-play-box{
+    padding:30px 10px;
+}
+
+.hidden-forvo{
+    display: none;
+}
+
+.forvo-name-origin{
+    display:inline-block;
+    margin-left: 20px;
+}
+
+.forvo-play-box input{
+   bottom: 5px;
+   transform: scale(1.5);
+   padding: 10px;
+   margin-right: 10px;
+   position: relative;
+}
+
+
+.forvo-flex{
+    display:flex; margin-top: 60px; margin: 10px; flex-direction: column;
+}
+
+.imgBox{
+    margin: 5px;
+    display:inline-block;
+    position: relative;
+    border:1px solid black;
+    width:160px; 
+}
+
+.imageLoader, .forvoLoader{
+    height:40px;
+    width:99%;
+    margin-left: .5%;
+    border-radius: 3px;
+}
+
+
+.imgBox{
+    margin: 5px;
+    display:inline-block;
+    position: relative;
+    border:1px solid black;
+    width:160px; 
+}
+
+.googleImage {
+    width:160px; 
+    display:block;
+    height: auto;
+}
+
+#tabContainer{
+  position: fixed;
+  width:100%;
+  height:50px;
+  display: inline-flex;
+  background-color: #f1f1f1;
+}
+
+#tabs {
+  top: 0px;
+  left: 8%;
+  display: inline-flex;
+  width: 100%;
+  height:50px;
+  overflow-x: auto;
+  border-bottom: 1px solid #ccc;
+  background-color: #f1f1f1;
+  z-index: 5;
+  white-space: nowrap;
+}
+
+#defBox{
+  position: absolute;
+  top:50px;
+  left:0px;
+  overflow-x: hidden;
+  overflow-y: auto; 
+  height:100%;
+  width:100%; 
+}
+
+#dictBox{
+  height:100%;
+  width:100%;
+}
+
+body{
+    margin:0;
+    width:100%;
+    height:100%;
+    overflow-x: hidden;
+    overflow-y: hidden;
+}
+
+#tabs button {
+  background-color: inherit;
+  float: left;
+  border: none;
+  outline: none;
+  cursor: pointer;
+  padding: 2px 8px;
+  transition: 0.3s;
+  font-size: 17px;
+}
+
+#tabs button:hover {
+  background-color: #ddd;
+}
+
+#tabs button.active {
+  background-color: #ccc;
+}
+
+.tabContent {
+  display: none;
+  border-top: none;
+}
+
+.targetTerm{
+    font-weight: bold;
+    color: gold;
+    text-shadow: 1px 1px black;
+}
+
+.exampleSentence{
+    background-color: lightskyblue;
+}
+
+.definitionBlock{
+    margin:5px 20px 5px 20px;
+}
+
+.tablinks{
+    min-width:80px;
+    max-width: 110px;
+    overflow-x: hidden;
+}
+
+hr{
+    margin:0px 10px;
+    padding:0px;
+}
+
+.dictionaryTitleBlock{
+    width:100%;
+    padding:0 0 2px 0;
+    border-top: 2px solid black;
+    border-bottom:2px solid black;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;   
+}
+
+.dictionaryTitle{
+    font-weight: bold;
+    font-size: 30px;
+    margin-left:10px;
+}
+
+.termPronunciation{
+    border-top: 1px solid gray;
+    background-color: #e1e3e8;
+    padding-bottom: 5px
+    margin-top:5px;
+    padding-left:10px;
+    min-height: 28px;
+}
+
+.definitionSideBar{
+    display:none;
+    
+    height: 100%;
+    position: fixed;
+    border: 2px solid black;
+    z-index:10;
+    background-color: white;
+    padding:5px 0px 10px 0px; 
+}
+
+.innerSideBar{
+    position: absolute;
+    top:0;
+    left:0;
+    width: 100%;
+    height: 100%;
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+
+.resizeBar{
+    position: absolute;
+    right:0px;
+    top:0;
+    height: 100%;
+    width: 5px;
+    cursor: w-resize;
+    z-index:100;
+}
+
+.sidebarOpenedDisplay{width:auto !important;}
+
+.sidebarOpenedSideBar{
+    display: block !important;
+}
+
+.listTitle{
+    font-weight: bold;
+    padding-left: 10px;
+}
+
+.listTitle:hover, li:hover {
+    cursor: pointer;
+    background-color: #e1e3e8;
+}
+
+.foundEntriesList{
+    margin:0px; 
+}
+
+.hiddenOl{
+    display: none;
+}
+
+.fieldSelectCont{
+  width:120px;
+  background-color: white;
+  display: inline-block;
+  margin-right: 5px;
+}
+
+.overwriteSelectCont{
+  width:100px;
+  background-color: white;
+  display: inline-block;
+  margin-right: 5px;
+  margin-left: 5px;
+}
+
+.dictionarySettings{
+    display: flex; 
+    flex-wrap: wrap;
+    align-items: center; 
+}
+
+.dupHeadCB{
+  display: flex;
+  align-items: center;
+  margin-left:10px;
+  max-width:90px;
+}
+
+.fieldSelect, .overwriteSelect{
+  font-weight: bold;
+  border: 1px #dadada solid;
+ cursor: pointer;
+ height:20px;
+}
+
+.inCheckBox{
+ cursor: pointer;
+}
+
+
+.fieldCheckboxes{
+    width:119px;
+}
+
+.overwriteCheckboxes{
+    width:98px;
+}
+
+.fieldCheckboxes, .overwriteCheckboxes {
+  display: none;
+  position: absolute;
+  border: 1px #dadada solid;
+  z-index:10;
+  background-color:white;
+}
+
+.fieldCheckboxes label, .overwriteCheckboxes label  {
+  display: block;
+
+}
+
+.fieldCheckboxes label:hover, .overwriteCheckboxes label:hover {
+  background-color: #e1e3e8;
+}
+
+.displayedCheckBoxes{
+    display:block !important;
+}
+
+.defTools, .dictNav, ol{
+    -webkit-touch-callout: none;  -webkit-user-select: none;-khtml-user-select: none;-moz-user-select: none;-ms-user-select: none;user-select: none;
+}
+
+.dictNav{
+    margin-right: 5px;
+}
+
+.prevDict{
+    position: relative;
+    top:3px;
+    cursor:pointer;
+}
+.nextDict{
+    position: relative;
+    bottom:3px;
+    cursor:pointer;
+}
+
+
+
+.clipper:hover, .sendToField:hover, .prevDef:hover, .nextDef:hover, .nextDict:hover, .prevDict:hover{
+    color:gray;
+}
+
+.termPronunciation{
+    position: relative;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: relative;
+    overflow-x:none;
+    overflow-y:none;
+}
+
+
+
+.tpCont{
+    max-width: 80%;
+}
+
+
+
+.dictNav{
+    display: inline-block;
+    font-size:20px;
+}
+.defTools, .defNav, .clipper, .sendToField, .ankiExportButton{
+    display: inline-block;
+    vertical-align: middle;
+    cursor:pointer;
+    margin:0px 3px;
+    
+}
+
+.defTools{
+    background-color: #e1e3e8;
+}
+
+.defNav{
+    position:relative;
+    bottom: 2px;
+}
+
+.prevDef, .nextDef{
+    font-size: 14px;
+}
+
+
+.prevDef{
+    position: relative;
+    margin:  0;
+    top: 5px;
+    cursor:pointer;
+}
+
+.nextDef{
+    margin:  0;
+    cursor:pointer;
+    padding-top:1px;
+}
+
+.ankiExportButton{
+    cursor:pointer;
+    display: inline-block;
+}
+
+.clipper{
+    position:relative;
+    bottom: 1px;
+}
+
+.sendToField{
+    position:relative;
+    bottom: 1px;
+}
+
+.defTools{
+    height:100%;
+
+}
+
+.ankiExportButton img{
+    width: 25px;
+    height: 25px;
+    display: block;
+
+}
+
+.overwriteSelect, .fieldSelect, .dupHeadCB, .dictionaryTitle{
+    -webkit-touch-callout: none;  -webkit-user-select: none;-khtml-user-select: none;-moz-user-select: none;-ms-user-select: none;user-select: none;
+}
+
+</style>
+<style id="nightModeCss"></style>
+<style id="customFonts"></style>
+<style id="fontSpecs">.foundEntriesList{font-size: 12px;}.termPronunciation,.definitionBlock{font-size: 20px;}</style>
+
+<style id="widthSpecs">
+.sidebarOpenedDisplay{margin-left:150px !important;
+}
+.sidebarOpenedSideBar{width:150px;}
+</style>
+<style id="userSelect">
+</style>
+
+<body>
+
+<div id="dictBox">
+<div id="tabContainer">
+
+<div id="tabs">
+</div>
+<div>
+<div id="defBox">
+</div>
+</div>
+
+<script>
+    var fefs = 12, dbfs = 22;
+    var hresizeInt;
+    var mouseX;
+    var nightMode = false;
+
+    function getSelectionText() {
+    var text = "";
+    if (window.getSelection) {
+        text = window.getSelection().toString();
+    }
+    if(text === "")return false;
+        return text.replace(/\n✂➠\n▲\n▼\n/g, '');
+    }
+
+    function getTermDefText(el, clip = false){
+        var term = el.parentElement.parentElement;
+        var def = term.nextElementSibling;
+        var rep = '<br>';
+        if(clip) rep = '\n';
+        return cleanTermDef(term.innerHTML, rep) + rep + cleanTermDef(def.innerHTML,  rep);
+    }
+
+    function cleanTermDef(text, rep){
+        text = text.replace(/<br>/g, '---NL---');
+        text = text.replace(/<[^>]+>/g, '').replace('✂', '').replace('➠', '').replace('▲', '').replace('▼', '');
+        return text.replace(/---NL---/g, rep);
+    }
+
+    function getDefinitionWord(dictEl, termBody, termTitle){
+        var definition = cleanTermDef(termBody.innerHTML, '<br>');
+        var dupHeader = dictEl.querySelector('.dupHeadCB input').checked;
+        var terms = termTitle.getElementsByClassName('mainword');
+        var stars = termTitle.getElementsByClassName('starcount')[0].textContent;
+        var word = '';
+        var term1 = terms[0].textContent;
+        var term2 = terms[1].textContent;
+        if(term1 != '' && term2 != ''){
+            word = term1 +', ' + term2
+        }else if(term1 != ''){
+            word = term1
+        }else if(term2 != ''){
+            word = term2
+        }
+        if(!dupHeader){
+            wordPron = termTitle.querySelector('.tpCont').textContent;
+            definition = wordPron + '<br>' + definition;
+        }else{
+            if(definition.indexOf('】') !== -1){
+                definition = definition.replace(/】/,  '】' + stars + ' ');
+            }else{
+                definition = definition.replace(/<br>/, stars+ '<br>');
+            }
+            
+        }
+        return [word, definition];
+    }
+
+
+  function getDefExport(event, dictName){
+        var definition = getSelectionText();
+        var termTitle = event.target.parentElement.parentElement.parentElement;
+        var termBody = termTitle.nextElementSibling;
+        var dictionaryElement = termTitle.previousElementSibling;
+        while (!dictionaryElement.classList.contains('dictionaryTitleBlock')){
+            dictionaryElement = dictionaryElement.previousElementSibling;
+        }
+        var wordDefinition= getDefinitionWord(dictionaryElement, termBody, termTitle);
+        if(! definition){
+            definition = wordDefinition[1];
+        }else{
+            definition = cleanTermDef(termTitle.textContent) +'<br>' + definition.replace(/\n/g, '<br>');
+        }
+        pycmd('addDef:'+ dictName + '◳◴'+ wordDefinition[0]  + '◳◴' + definition);
+    }
+
+     function getAudioExport(event, dictName){
+        var termTitle = event.target.parentElement.parentElement.parentElement
+        var defBlock = termTitle.nextElementSibling;
+        var toExport = [];
+        var word = cleanTermDef(termTitle.querySelector('.terms').innerHTML)
+        var audio = defBlock.getElementsByTagName('input');
+        for (var i = 0; i < audio.length; i++) {
+            if(audio[i].checked){
+                toExport.push(audio[i].parentElement.getElementsByClassName('forvo-play')[0].currentSrc);
+            }
+        }
+        pycmd('audioExport:' + word + '◳◴' +  JSON.stringify(toExport));
+
+    }
+
+
+    function getImageExport(event, dictName){
+        var termTitle = event.target.parentElement.parentElement.parentElement
+        var defBlock = termTitle.nextElementSibling;
+        var word = cleanTermDef(termTitle.querySelector('.terms').innerHTML)
+        var selImgs = defBlock.getElementsByClassName('selectedImage')
+        var urls = [];
+        if(selImgs.length > 0){
+            for(var i = 0; i < selImgs.length; i++){
+                urls.push(selImgs[i].dataset.url)
+            }
+            pycmd('imgExport:' + word + '◳◴' + JSON.stringify(urls));
+        }
+    }
+
+    function ankiExport(ev, dictName){
+        if(dictName == 'Google Images'){
+            getImageExport(event, dictName)
+        }else if(dictName == 'Forvo'){
+            getAudioExport(event, dictName)
+        }else{
+            getDefExport(event, dictName.replace(/ /g, '_'))
+        }  
+    }
+
+
+    function clipText(ev){
+        var definition = getSelectionText();
+        if(! definition){
+        termTitle = event.target.parentElement.parentElement
+        termBody = termTitle.nextElementSibling
+        dictionaryElement = termTitle.previousElementSibling
+        while (!dictionaryElement.classList.contains('dictionaryTitleBlock')){
+            dictionaryElement = dictionaryElement.previousElementSibling
+        }
+        var wordDefinition= getDefinitionWord(dictionaryElement, termBody, termTitle)
+        definition = wordDefinition[1]
+        }
+        pycmd('clipped:' + definition);
+    }
+    
+    function getDefForField(event, dictName){
+        var definition = getSelectionText();
+        var termTitle = event.target.parentElement.parentElement
+        if(! definition){
+        var termBody = termTitle.nextElementSibling
+        var dictionaryElement = termTitle.previousElementSibling
+        while (!dictionaryElement.classList.contains('dictionaryTitleBlock')){
+            dictionaryElement = dictionaryElement.previousElementSibling
+        }
+        var wordDefinition= getDefinitionWord(dictionaryElement, termBody, termTitle)
+        definition = wordDefinition[1]
+        }else{
+
+            definition = cleanTermDef(termTitle.textContent) +'<br>' + definition.replace(/\n/g, '<br>')
+        }
+        pycmd('sendToField:' + dictName + '◳◴' + definition);
+    }
+
+    function getImageForField(event, dictName){
+        var defBlock = event.target.parentElement.parentElement.nextElementSibling;
+        var selImgs = defBlock.getElementsByClassName('selectedImage')
+        var urls = []
+        if(selImgs.length > 0){
+            for(var i = 0; i < selImgs.length; i++){
+                urls.push(selImgs[i].dataset.url)
+            }
+            pycmd('sendImgToField:' + JSON.stringify(urls));
+        }
+    }
+
+    function getAudioForField(event, dictName){
+        var defBlock = event.target.parentElement.parentElement.nextElementSibling;
+
+        var toExport = [];
+        var audio = defBlock.getElementsByTagName('input');
+        for (var i = 0; i < audio.length; i++) {
+            if(audio[i].checked){
+                toExport.push(audio[i].parentElement.getElementsByClassName('forvo-play')[0].currentSrc);
+            }
+        }
+
+        pycmd('sendAudioToField:' + JSON.stringify(toExport));
+
+    }
+
+    function sendToField(event, dictName){
+        if(dictName == 'Google Images'){
+            getImageForField(event, dictName)
+        }else if(dictName == 'Forvo'){
+            getAudioForField(event, dictName)
+        }else{
+            getDefForField(event, dictName.replace(/ /g, '_'))
+        }
+        
+    }
+
+    function navigateDict(ev, next, def = false){
+        var dict = ev.target.parentElement.parentElement.parentElement;
+        var wanted = 'dictionaryTitleBlock';
+        var w = dict.closest('#defBox');
+        if(def){
+            wanted = 'termPronunciation'
+        }
+        if(next){
+            var nextEl  = dict;
+            while(nextEl = nextEl.nextElementSibling){
+                if(nextEl.classList && nextEl.classList.contains(wanted)){
+                    w.scrollTop = nextEl.offsetTop;
+                    break;
+                }
+            }
+        }else if(parseInt(dict.dataset.index) > 0){
+            var nextEl  = dict;
+            while(nextEl = nextEl.previousElementSibling){
+                if(nextEl.classList && nextEl.classList.contains(wanted)){
+                    w.scrollTop = nextEl.offsetTop;
+                    break;
+                }
+            }
+        }
+    }
+
+    function navigateDef(ev, next){
+        navigateDict(ev, next, true);
+    }
+
+    document.onmousemove = updateMouseX
+    function updateMouseX(e) {
+        mouseX = (window.Event) ? e.pageX : event.clientX + (document.documentElement.scrollLeft ? document.documentElement.scrollLeft : document.body.scrollLeft);
+    }
+
+    window.addEventListener('mouseup', stopResize);
+    
+    function hresize(ev){
+        document.getElementById('userSelect').innerHTML = 'body{-webkit-touch-callout: none;  -webkit-user-select: none;-khtml-user-select: none;-moz-user-select: none;-ms-user-select: none;user-select: none;}';
+        var sidebar = ev.target.parentElement;
+        var ws = document.getElementById('widthSpecs');
+        hresizeInt = setInterval(function(){
+            ws.innerHTML = '.sidebarOpenedDisplay{margin-left:'+ mouseX + 'px !important;}.sidebarOpenedSideBar{width:'+ mouseX + 'px;}';}
+        , 10);
+    }
+
+    function stopResize(){
+        clearInterval(hresizeInt);
+        document.getElementById('userSelect').innerHTML = '';
+        if(mouseX > window.innerWidth){
+            document.getElementById('widthSpecs').innerHTML = '.sidebarOpenedDisplay{margin-left:'+ (innerWidth -20) + 'px !important;}.sidebarOpenedSideBar{width:'+  (innerWidth -20)  + 'px;}';
+        }else if(mouseX < 0){
+            document.getElementById('widthSpecs').innerHTML = '.sidebarOpenedDisplay{margin-left:20px !important;}.sidebarOpenedSideBar{width:20px;}';
+        }
+    }
+
+    function addCustomFont(font, name){
+        var cf = document.getElementById('customFonts');
+        cf.innerHTML += ' @font-face { font-family: '+ name +'; src: url(user_files/fonts/' + font + ');}\n '
+    }
+
+
+    function scaleFont(plus){
+        var fs = document.getElementById('fontSpecs');
+        if(plus){
+            fefs += 2;
+            dbfs += 2;
+        }else{
+            fefs -= 2;
+            dbfs -= 2;
+        }
+        fs.innerHTML = '.foundEntriesList{font-size:'+ fefs +'px;}.termPronunciation,.definitionBlock{font-size:'+ dbfs +'px;}.ankiExportButton img{height:' + dbfs +'px; width:' + dbfs + 'px;}'
+
+        pycmd('saveFS:' + fefs  + ':' + dbfs);
+    }
+    var expanded = false;
+
+    function showCheckboxes(event) {
+      var el = event.target;
+      if (expanded !== el) {
+        hideCheckBoxes();
+        showCheckBoxes(el);
+      } else {
+        hideCheckBoxes();
+      }
+      event.stopPropagation();
+    }
+
+    function showCheckBoxes(el){
+        var checkboxes = el.nextSibling;
+        el.classList.add('currentCheckbox')
+        checkboxes.classList.add('displayedCheckBoxes');
+        expanded = el;
+    }
+
+    function hideCheckBoxes(){
+        var boxes = document.getElementsByClassName("displayedCheckBoxes");
+        if(boxes){
+            for(var i = 0; i < boxes.length; i++){
+                boxes[i].classList.remove('displayedCheckBoxes');
+            }
+        }
+        if(current){
+            var current = document.getElementsByClassName("currentCheckbox");
+            for(var i = 0; i < current.length; i++){
+                current[i].classList.remove('currentCheckbox');
+            }
+        }
+        expanded = false;
+    }
+
+    function toggleImageSelect(img){
+        if(img.classList.contains('selectedImage')){
+            img.classList.remove('selectedImage');
+        }else{
+            img.classList.add('selectedImage');
+        }
+    }
+
+    function loadMoreImages(button, ...rest){
+        var urls = rest;
+        var defBox = button.parentElement;
+        var imageCount = defBox.getElementsByClassName('googleImage').length;
+        if(imageCount > urls.length) return;
+        var toLoad = urls.slice(imageCount, imageCount + 3);
+        loadNewImages(toLoad, defBox, button);
+    }
+
+    function loadNewImages(toLoad, defBox, button){
+        var cont = document.createElement('div')
+        cont.classList.add('googleCont')
+        var html = '<div class="googleCont">'
+        for(var i = 0; i < toLoad.length; i++){
+            img = toLoad[i]
+            html+= '<div class="imgBox"><div onclick="toggleImageSelect(this)" data-url="'+ img +'" class="googleHighlight"></div><img class="googleImage"  src="' + img + '"></div>'
+        }
+        cont.innerHTML = html;
+        defBox.insertBefore(cont, button);
+        setTimeout(function(){
+            var w = button.closest('#defBox');
+            w.scrollTop = button.offsetTop - 300;
+        },1000)  
+    }
+
+    function handleBodyClick(ev){
+        var targ = ev.target;
+        var classes = targ.classList;
+        if(expanded && classes && (!classes.contains('inCheckBox'))){
+            hideCheckBoxes();
+        }
+    }
+
+
+    function handleDupChange(cb, className){
+        var check;
+        var dictName = cb.parentElement.parentElement.parentElement.getElementsByClassName('dictionaryTitle')[0].textContent.replace(/ /g, '_');
+        var checkbs = document.getElementsByClassName(className);
+        if(cb.checked){
+            check = '1';
+            for (var i = 0; i < checkbs.length; i++) {
+                checkbs[i].checked = true
+            }
+        }else{
+            check = '0';
+            for (var i = 0; i < checkbs.length; i++) {
+                checkbs[i].checked = false
+            }
+        }
+        pycmd('setDup:' + check + '◳' + dictName);
+    }
+
+    document.body.addEventListener("click", function (ev) {
+        handleBodyClick(ev);
+    }, false);
+    
+     function handleFieldCheck(el){
+        var dictName = el.parentElement.parentElement.dataset.dictname;
+        if(dictName != 'Google Images'){
+            dictName = dictName.replace(/ /g, '_');
+        }
+        var conts = document.querySelectorAll('.fieldCheckboxes[data-dictname="'+ dictName +'"')
+        var fields = {};
+        fields.dictName = dictName;
+        fields.fields = [];
+        for (var i = 0; i < conts.length; i++) {
+            var checks = conts[i].getElementsByTagName('INPUT');
+            var selCount = 0;
+            for (var x = 0; x < checks.length; x++) {
+                if(el.value === checks[x].value){
+                    checks[x].checked = el.checked
+                }
+                if(checks[x].checked === true){
+                    selCount++;
+                    if(fields.fields.indexOf(checks[x].value) == -1){
+                        fields.fields.push(checks[x].value);
+                    }
+                }
+            }
+            var header = '&nbsp;' + selCount + " Selected";
+            if(selCount === 0){
+                header = '&nbsp;Select Fields ▾';
+            } 
+            conts[i].parentElement.firstChild.innerHTML = header;
+        }
+        pycmd('fieldsSetting:' + JSON.stringify(fields));
+    }
+
+    function handleAddTypeCheck(el){
+        var radios = document.getElementsByClassName(el.classList[1]);
+        var dictName = el.parentElement.parentElement.dataset.dictname;
+        var addType = {'name' : dictName, 'type' : el.value};
+        for (var i = 0; i < radios.length; i++) {
+            if(radios[i].value === el.value){
+                radios[i].checked = true;
+                var cont = radios[i].closest('.overwriteSelectCont');
+                var title = cont.getElementsByClassName('overwriteSelect')[0]
+                title.innerHTML = '&nbsp;' + el.parentElement.textContent;
+            }
+        }
+        hideCheckBoxes();
+        pycmd('overwriteSetting:' + JSON.stringify(addType));       
+    }
+
+
+    var sidebarOpened = false;
+    function openSidebar(){
+        if(sidebarOpened === false){
+            var sidebars = document.getElementsByClassName('definitionSideBar');
+            for (var i = 0; i < sidebars.length; i++) {
+                sidebars[i].classList.add('sidebarOpenedSideBar')
+            }
+            var mains = document.getElementsByClassName('mainDictDisplay');
+            for (var i = 0; i < mains.length; i++) {
+                mains[i].classList.add('sidebarOpenedDisplay')
+            }
+            sidebarOpened = true;
+        }else{
+            var sidebars = document.getElementsByClassName('definitionSideBar');
+            for (var i = 0; i < sidebars.length; i++) {
+                sidebars[i].classList.remove('sidebarOpenedSideBar')
+            }
+            var mains = document.getElementsByClassName('mainDictDisplay');
+            for (var i = 0; i < mains.length; i++) {
+                mains[i].classList.remove('sidebarOpenedDisplay')
+            }
+            sidebarOpened = false;
+        }
+    }
+
+
+    function navDictOrEntry(){
+        var w = this.closest('#defBox');
+        var mD = this.closest('.definitionSideBar').nextSibling;
+        var idx = this.dataset.index;
+        if(this.nodeName === 'LI'){
+            var el =  mD.querySelectorAll('.termPronunciation[data-index="'+idx + '"]')[0];
+        }else{
+            var el =  mD.querySelectorAll('.dictionaryTitleBlock[data-index="'+idx+ '"]')[0];
+        }
+        w.scrollTop = el.offsetTop;
+    }
+
+    function toggleDictEntries(ev){
+        ev.preventDefault();
+        var ol = this.nextSibling;
+        if(ol.classList.contains('hiddenOl')){
+            ol.classList.remove('hiddenOl')
+        }else{
+            ol.classList.add('hiddenOl')
+        }
+    }
+
+    function addSidebarListeners(parent){
+        var sb = parent.getElementsByClassName('definitionSideBar')[0];
+        if(!sb) return;
+        var titles = sb.getElementsByClassName('listTitle');
+        for (var i = 0; i < titles.length; i++) {
+            titles[i].addEventListener("click", navDictOrEntry);
+            titles[i].addEventListener("contextmenu", toggleDictEntries);
+        }
+        var items = sb.getElementsByTagName("LI");
+        for (var i = 0; i < items.length; i++) {
+            items[i].addEventListener("click", navDictOrEntry);
+        }
+    }
+
+    var tabs = [];
+    function removeFocus(){
+      var scroll = document.getElementById('defBox').scrollTop
+      var i, tabContent, tablinks;
+      tabContent = document.getElementsByClassName("tabContent");
+      for (i = 0; i < tabContent.length; i++) {    
+        tabContent[i].style.display = "none";
+      }
+      tablinks = document.getElementsByClassName("active");
+      for (i = 0; i < tablinks.length; i++) {
+        if(tabs.length > 0){
+            index = parseInt(tablinks[i].dataset.index);
+            tabs[index][2] = scroll
+        }
+        tablinks[i].classList.remove("active");
+      }      
+    }
+
+    function focusTab(tab){
+        var index = parseInt(tab.dataset.index)
+        tab.classList.add("active");
+        tabs[index][1].style.display = "block";
+        document.getElementById('defBox').scrollTop = tabs[index][2]
+    }
+
+    function loadTab(){
+        removeFocus();
+        focusTab(this);
+        resizer();
+        pycmd('updateTerm:' + this.textContent);       
+    }
+
+    function closeTab(ev){
+        ev.preventDefault();
+        var index = parseInt(this.dataset.index);
+        closeTabAtIndex(index);
+        return false;
+    }
+
+    function closeTabAtIndex(index){
+        focusAnotherTab(index);
+        tabs[index][0].remove();
+        tabs[index][1].remove();
+        tabs[index] = false;
+        cleanTabsArray();
+    }
+
+    function cleanTabsArray(){
+        var empty = true;
+        for(var i = 0; i < tabs.length; i++){
+            if(tabs[i]){
+                empty = false;
+                break;
+            }
+        }
+        if(empty)tabs = [];
+    }
+
+    function focusAnotherTab(index){
+        var counter, toFocus, tablink = document.getElementsByClassName("active")[0];
+        if(parseInt(tablink.dataset.index) === index){
+            toFocus = false;
+            counter = index;
+            while(!toFocus && counter > 0){
+                counter = counter - 1;
+                toFocus = tabs[counter]
+            }
+            if(toFocus){
+                focusTab(toFocus[0]);
+                return;
+            }
+            counter = index;
+            while(!toFocus && counter < tabs.length - 1){
+                counter = counter + 1;
+                toFocus = tabs[counter]
+            }
+            if(toFocus){
+                focusTab(toFocus[0]);
+                return;
+            }
+        }
+    }
+
+    function resizer(){
+    var height = document.getElementById('tabs').offsetHeight  ;
+    var wHeight = window.innerHeight;
+    var defB = document.getElementById('defBox');
+    defB.style.top = height + 'px';
+    defB.style.height = wHeight - height + 'px';
+    var sidebars = document.getElementsByClassName('definitionSideBar');
+    for (var i = 0; i < sidebars.length; i++) {
+        sidebars[i].style.height = wHeight - 14 - height + 'px';
+        }
+    }
+    
+    window.onresize = resizer;
+    resizer();
+
+    function fetchCurrentTab(term){
+        var newTab;
+            var curTabs = document.getElementsByClassName('active')
+            if(curTabs.length > 0){
+                newTab = curTabs[0]
+                newTab.innerHTML = term;
+            }else{
+                var curTabs = document.getElementsByClassName('tablinks')
+                if(curTabs.length > 0){
+                    newTab = curTabs[curtabs.length - 1]
+                    newTab.innerHTML = term;
+                }else{
+                    newTab = false;
+                }
+            }
+            return newTab;
+    }
+
+    function fetchCurrentTabContent(html){
+       var contents = document.getElementsByClassName('tabContent')
+       var content;
+       if(contents.length > 0){
+            for (var i = contents.length - 1; i >= 0; i--) {
+                if(contents[i].style.display == "block"){
+                    content = contents[i];
+                    content.innerHTML = html;
+                    break;
+                }
+            }
+
+       }else{
+            content = fetchNewTabContent(html)
+
+       }
+       return content
+    }
+
+    function fetchNewTab(term){
+        var newTab = document.createElement("BUTTON");
+        newTab.innerHTML = term;
+        newTab.classList.add("tablinks");
+        newTab.dataset.index = tabs.length;
+        newTab.addEventListener("click", loadTab);
+        newTab.addEventListener("contextmenu", closeTab);   
+        return newTab
+    }
+
+    function fetchNewTabContent(html){
+        var content = document.createElement("DIV");
+        content.classList.add('tabContent');
+        content.innerHTML = html;
+        content.dataset.index = tabs.length;
+        return content
+
+    }
+
+
+function attemptCloseFirstTab(){
+    var curTabs = document.getElementsByClassName('active');
+    if(curTabs.length == 1){
+        if(curTabs[0].textContent == 'Welcome'){
+            closeTabAtIndex(0);
+        }
+
+    }
+}    
+
+ // function loadMoreImages(button, ...rest){
+ //        var urls = rest;
+ //        var defBox = button.parentElement;
+ //        var imageCount = defBox.getElementsByClassName('googleImage').length;
+ //        if(imageCount > urls.length) return;
+ //        var toLoad = urls.slice(imageCount, imageCount + 3);
+ //        loadNewImages(toLoad, defBox, button);
+ //    }
+
+ //    function loadNewImages(toLoad, defBox, button){
+ //        var cont = document.createElement('div')
+ //        cont.classList.add('googleCont')
+ //        var html = '<div class="googleCont">'
+ //        for(var i = 0; i < toLoad.length; i++){
+ //            img = toLoad[i]
+ //            html+= '<div class="imgBox"><div onclick="toggleImageSelect(this)" data-url="'+ img +'" class="googleHighlight"></div><img class="googleImage"  src="' + img + '"></div>'
+ //        }
+ //        cont.innerHTML = html;
+ //        defBox.insertBefore(cont, button);
+ //        setTimeout(function(){
+ //            var w = button.closest('#defBox');
+ //            w.scrollTop = button.offsetTop - 300;
+ //        },1000)  
+ //    }
+
+
+function loadMoreForvos(button){
+    var forvoParent = button.parentElement;
+    var forvos = forvoParent.getElementsByClassName('hidden-forvo');
+    
+    if(forvos.length < 1){
+        return;
+    }
+    var max = 3;
+    if(forvos.length < 3){
+        max = forvos.length;
+    } 
+    for (var i = 0; i < max; i++) {
+        forvos[0].classList.remove('hidden-forvo')
+    }
+    return
+
+}
+
+
+function loadForvoDict(content){
+    var forvos = content.getElementsByClassName('forvo');
+    if(forvos.length > 0){
+        var forvo = forvos[0];
+
+        var urls = JSON.parse(forvo.dataset.urls)
+        var html = '<div class="forvo-flex">'
+        var max = 3;
+        if(urls.length < max) max = urls.length;
+        for (var i = 0; i < max; i++) {
+             html +='<div class="forvo-play-box" ><input type="checkbox"><audio class="forvo-play" controls controlsList="nodownload"><source src="'  + urls[i][3] + '" type="audio/mpeg"><source src="' + urls[i][2] + '" type="audio/mpeg"></audio></input><div class="forvo-name-origin"><div class="forvo-name"><b>' + urls[i][0] +'</b></div> <div class="forvo-origin">' +urls[i][1] +'</div></div></div>';
+        }
+        var buttonHtml = ''
+        if(urls.length > 6){
+            for (var i = 6; i < urls.length; i++) {
+                html +='<div class="forvo-play-box hidden-forvo" ><input type="checkbox"><audio class="forvo-play" controls controlsList="nodownload"><source src="'  + urls[i][3] + '" type="audio/mpeg"><source src="' + urls[i][2] + '" type="audio/mpeg"></audio></input><div class="forvo-name-origin"><div class="forvo-name"><b>' + urls[i][0] +'</b></div> <div class="forvo-origin">' +urls[i][1] +'</div></div></div>';
+            }
+            buttonHtml = '<button class="forvoLoader" onclick="loadMoreForvos(this)">Load More</button>'
+        }
+
+        html += buttonHtml  + '</div>'
+        forvo.innerHTML = html;
+        
+    }
+}
+
+function addNewTab(html, term = 'Welcome', singleTabMode = false, forvo = false){
+        if(singleTabMode){
+            var newTab = fetchCurrentTab(term);
+            if(newTab){
+                var content = fetchCurrentTabContent(html);
+                addSidebarListeners(content);
+                document.getElementById("defBox").scrollTop = 0;
+            }
+        }
+
+        if(!newTab){
+            attemptCloseFirstTab()
+            var newTab = fetchNewTab(term);
+            var content = fetchNewTabContent(html);
+            document.getElementById("defBox").appendChild(content);
+            tabBar = document.getElementById("tabs")
+            tabBar.appendChild(newTab);
+            tabBar.scrollLeft = 99999
+            removeFocus();
+            tabs.push([newTab, content, 0])
+            addSidebarListeners(content);
+            focusTab(newTab);
+        }   
+        
+        
+       
+        
+        if(sidebarOpened){
+            content.getElementsByClassName('definitionSideBar')[0].classList.add('sidebarOpenedSideBar')
+            content.getElementsByClassName('mainDictDisplay')[0].classList.add('sidebarOpenedDisplay')
+        }
+        resizer();
+        if(nightMode){
+            applyIcon(nightMode)
+        }
+        loadForvoDict(content)
+        
+    }
+
+function openSidebar(){    
+        if(sidebarOpened === false){
+            var sidebars = document.getElementsByClassName('definitionSideBar');
+            for (var i = 0; i < sidebars.length; i++) {
+                sidebars[i].classList.add('sidebarOpenedSideBar')
+            }
+            var mains = document.getElementsByClassName('mainDictDisplay');
+            for (var i = 0; i < mains.length; i++) {
+                mains[i].classList.add('sidebarOpenedDisplay')
+            }
+            sidebarOpened = true;
+        }else{
+            var sidebars = document.getElementsByClassName('definitionSideBar');
+            for (var i = 0; i < sidebars.length; i++) {
+                sidebars[i].classList.remove('sidebarOpenedSideBar')
+            }
+            var mains = document.getElementsByClassName('mainDictDisplay');
+            for (var i = 0; i < mains.length; i++) {
+                mains[i].classList.remove('sidebarOpenedDisplay')
+            }
+            sidebarOpened = false;
+        }
+    }
+
+    function applyIcon(night){
+        var imgConts = document.getElementsByClassName('ankiExportButton');
+        if(night){
+            for (var i = imgConts.length - 1; i >= 0; i--) {
+              imgConts[i].getElementsByTagName('img')[0].src = 'icons/blackAnki.png'
+            }
+        }else{
+            for (var i = imgConts.length - 1; i >= 0; i--) {
+              imgConts[i].getElementsByTagName('img')[0].src = 'icons/anki.png'
+            }       
+        }
+      }
+
+function nightModeToggle(night){
+  var cf = document.getElementById('nightModeCss');
+  if (night){
+    nightMode = true
+    cf.innerHTML = 'body, .definitionSideBar, .defTools{color: white !important;background: black !important;} .termPronunciation{background: black !important;border-top:1px solid white !important;border-bottom:1px solid white !important;} .overwriteSelect, .fieldSelect, .overwriteCheckboxes, .fieldCheckboxes{background: black !important;} .fieldCheckboxes label:hover, .overwriteCheckboxes label:hover {background-color:   #282828 !important;} #tabs{background:black !important; color: white !important;} .tablinks:hover{background:gray !important;} .tablinks{color: white !important;} .active{background-image: linear-gradient(#272828, black); border-left: 1px solid white !important;border-right: 1px solid white !important;} .dictionaryTitleBlock{border-top: 2px solid white;border-bottom: 1px solid white;} .imageLoader, .forvoLoader{background-image: linear-gradient(#272828, black); color: white; border: 1px solid gray;}.definitionSideBar{border: 2px solid white;}';
+    applyIcon(nightMode);
+  }else{
+    nightMode = false
+    cf.innerHTML = '';
+    applyIcon(nightMode);
+  }
+}
+
+    </script>
+    <script id="initialValue"></script>
+    </html>
