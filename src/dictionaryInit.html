@@ -28,14 +28,15 @@
 
 .forvo-play{
     position:relative;
-    top:15px;
-    height:10px;
+    bottom: 3px;
+    height:20px;
     width:200px;
-    border-radius: 0px;
+    border-radius: 5px;
+
 }
 
 .forvo-play-box{
-    padding:30px 10px;
+    padding:10px 10px;
 }
 
 .hidden-forvo{
@@ -477,6 +478,11 @@ hr{
     var mouseX;
     var nightMode = false;
 
+
+    function loadImageForvoHtml(html, idName){
+        document.getElementById(idName).innerHTML = html;
+    }
+
     function getSelectionText() {
     var text = "";
     if (window.getSelection) {
@@ -529,7 +535,6 @@ hr{
         return [word, definition];
     }
 
-
   function getDefExport(event, dictName){
         var definition = getSelectionText();
         var termTitle = event.target.parentElement.parentElement.parentElement;
@@ -562,7 +567,6 @@ hr{
 
     }
 
-
     function getImageExport(event, dictName){
         var termTitle = event.target.parentElement.parentElement.parentElement
         var defBlock = termTitle.nextElementSibling;
@@ -586,7 +590,6 @@ hr{
             getDefExport(event, dictName.replace(/ /g, '_'))
         }  
     }
-
 
     function clipText(ev){
         var definition = getSelectionText();
@@ -1155,8 +1158,12 @@ function loadMoreForvos(button){
 }
 
 
-function loadForvoDict(content){
+function loadForvoDict(content, id = false){
+    if(id){
+        content = document.getElementById(id);
+    }
     var forvos = content.getElementsByClassName('forvo');
+    
     if(forvos.length > 0){
         var forvo = forvos[0];
 

@@ -339,15 +339,18 @@ class DictDB:
         self.c.execute("CREATE INDEX IF NOT EXISTS iap" + text +" ON " + text +" ( altterm, pronunciation );")
         self.c.execute("CREATE INDEX IF NOT EXISTS ia" + text +" ON " + text +" (pronunciation);")
 
-    def importToDict(self, dictName, term, altTerm, pronunciation, pos, definition, examples, audio, frequency, starCount):
-        term = term.replace('\n', '')
-        definition = re.sub(r'<br>$', '', definition)
-        if len(term) > 1:
-            term = term.replace('=', '')
-        altTerm = altTerm.replace('\n', '').replace('=', '')
-        pronunciation = pronunciation.replace('\n', '')
-        definition = definition.replace('\n', '<br>')
-        self.c.execute('INSERT INTO ' + dictName + ' (term, altterm, pronunciation, pos, definition, examples, audio, frequency, starCount) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);', (self.cleanLT(term), self.cleanLT(altTerm), self.cleanLT(pronunciation), self.cleanLT(pos), self.cleanLT(definition), self.cleanLT(examples), audio, frequency, starCount))
+    # def importToDict(self, dictName, term, altTerm, pronunciation, pos, definition, examples, audio, frequency, starCount):
+    #     term = term.replace('\n', '')
+    #     definition = re.sub(r'<br>$', '', definition)
+    #     if len(term) > 1:
+    #         term = term.replace('=', '')
+    #     altTerm = altTerm.replace('\n', '').replace('=', '')
+    #     pronunciation = pronunciation.replace('\n', '')
+    #     definition = definition.replace('\n', '<br>')
+    #     self.c.execute('INSERT INTO ' + dictName + ' (term, altterm, pronunciation, pos, definition, examples, audio, frequency, starCount) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);', (self.cleanLT(term), self.cleanLT(altTerm), self.cleanLT(pronunciation), self.cleanLT(pos), self.cleanLT(definition), self.cleanLT(examples), audio, frequency, starCount))
+
+    def importToDict(self, dictName, dictionaryData):
+        self.c.executemany('INSERT INTO ' + dictName + ' (term, altterm, pronunciation, pos, definition, examples, audio, frequency, starCount) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);', dictionaryData)
 
     def dropTables(self, text):
         self.c.execute("SELECT name FROM sqlite_master WHERE type='table' AND name LIKE ?;" , (text, ))

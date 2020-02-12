@@ -10,7 +10,6 @@ import requests
 from . import Pyperclip
 import time
 import re
-from aqt.qt import QThread, pyqtSignal
 
 countryCodes = {"Afghanistan" : "countryAF",
 "Albania": "countryAL",
@@ -255,14 +254,9 @@ countryCodes = {"Afghanistan" : "countryAF",
 "Zambia": "countryZM",
 "Zimbabwe": "countryZW"}
 
-class Google(QThread):
-
-    resultsFound = pyqtSignal(list)
-
+class Google(object):
     def __init__(self):
-        QThread.__init__(self)
         self.GOOGLE_SEARCH_URL = "https://www.google.com/search"
-        self.term = False
         self.initSession()
 
 
@@ -274,15 +268,6 @@ class Google(QThread):
                     Gecko/20100101 Firefox/10.0"
             }
         )
-
-    def setTermIdName(self, term, idName):
-        self.term = term
-        self.idName = idName
-
-    def run(self):
-        if self.term:
-            resultList = self.getPreparedResults(self.term, self.idName)
-            self.resultsFound.emit(resultList)
 
     def search(self, keyword, maximum, region = False):
         query = self.query_gen(keyword) 
@@ -318,35 +303,6 @@ class Google(QThread):
         except:
             return []
 
-    def getHtml(self, term):
-        images = self.search(term, 80)
-        if not images or len(images) < 1:
-            return 'No Images Found. This is likely due to a connectivity error.'
-        firstImages = []
-        tempImages = []
-        for idx, image in enumerate(images):
-            tempImages.append(image) 
-            if len(tempImages) > 2 and len(firstImages) < 1:
-                firstImages += tempImages
-                tempImages = []
-            if len(tempImages) > 2 and len(firstImages) > 1:
-                break
-        html = '<div class="googleCont">'
-        for img in firstImages:
-            html+= '<div class="imgBox"><div onclick="toggleImageSelect(this)" data-url="'+ img +'" class="googleHighlight"></div><img class="googleImage"  src="' + img + '"></div>'
-        html += '</div><div class="googleCont">'
-        for img in tempImages:
-            html+= '<div class="imgBox"><div onclick="toggleImageSelect(this)" data-url="'+ img +'" class="googleHighlight"></div><img class="googleImage"  src="' + img + '"></div>'
-        html += '</div><button class="imageLoader" onclick="loadMoreImages(this, \\\'' + '\\\' , \\\''.join(self.getCleanedUrls(images)) +'\\\')">Load More</button>'
-        return html
-
-    def getPreparedResults(self, term, idName):
-        html = self.getHtml(term)
-        return [html, idName]
-    
-    def getCleanedUrls(self, urls):
-        return [x.replace('\\', '\\\\') for x in urls]
-
     def image_search(self, query_gen, maximum, region = False):
         results = []
         if not region:
@@ -360,7 +316,7 @@ class Google(QThread):
                     count+= 1
                     hr = self.session.get(next(query_gen)+ '&ijn=0&cr=' + region)
                     html = hr.text
-                    if not html and not '<!doctype html>' in html:
+                    if not html or not '<!doctype html>' in html:
                         if count > 5:
                             finished = True
                             break

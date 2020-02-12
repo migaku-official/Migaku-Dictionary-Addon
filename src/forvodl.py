@@ -9,6 +9,7 @@ from bs4 import BeautifulSoup
 import requests
 import re
 import base64
+from aqt.qt import QThread, pyqtSignal
 
 languages = {"German" : "de",
  "Tatar" : "tt",
@@ -83,9 +84,14 @@ languages = {"German" : "de",
  "Kurdish" : "ku"}
  
 
-class Forvo(object):
+class Forvo(QThread):
+
+    resultsFound = pyqtSignal(list)
+
     def __init__(self, language):
+        QThread.__init__(self)
         self.selLang = language
+        self.term = False
         self.langShortCut = languages[self.selLang]
         self.GOOGLE_SEARCH_URL = "https://forvo.com/word/◳t/#" + self.langShortCut #◳r
         self.session = requests.session()
@@ -96,6 +102,15 @@ class Forvo(object):
             }
         )
 
+    def setTermIdName(self, term, idName):
+        self.term = term
+        self.idName = idName
+
+    def run(self):
+        if self.term:
+            resultList = [self.attemptFetchForvoLinks(self.term), self.idName]
+            self.resultsFound.emit(resultList)
+
     def search(self, term, lang = False):
         if lang and self.selLang != lang:
             self.selLang = lang
@@ -104,13 +119,17 @@ class Forvo(object):
         query = self.GOOGLE_SEARCH_URL.replace('◳t', re.sub(r'[\/\'".,&*@!#()\[\]\{\}]', '', term))
         return self.image_search(query)
 
-
     def decodeURL(self, url1, url2, protocol, audiohost, server):
         url2 = protocol + "//" + server + "/player-mp3-highHandler.php?path=" + url2;
         url1 = protocol + "//" + audiohost + "/mp3/" + base64.b64decode(url1).decode("utf-8", "strict")
         return url1, url2
 
-        
+    def attemptFetchForvoLinks(self,term):
+        urls = self.search(term)
+        if len(urls) > 0:
+            return json.dumps(urls)
+        else:
+            return False
 
     def generateURLS(self, results):
         audio = re.findall(r'var pronunciations = \[([\w\W\n]*?)\];', results)

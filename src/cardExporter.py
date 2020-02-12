@@ -3,6 +3,7 @@
 
 from aqt.qt import *
 from anki.utils import isMac, isLin, isWin
+from aqt.utils import ensureWidgetInScreenBoundaries
 from os.path import join, exists
 from shutil import copyfile
 from .miutils import miInfo, miAsk
@@ -90,6 +91,7 @@ class CardExporter():
         self.window.closeEvent = self.closeEvent
         self.window.hideEvent = self.hideEvent
         self.setHotkeys()
+        
     
     def initTooltips(self):
         if self.config['tooltips']:
@@ -102,6 +104,7 @@ class CardExporter():
         if sizePos:
             self.window.resize(sizePos[2], sizePos[3])
             self.window.move(sizePos[0], sizePos[1])
+            ensureWidgetInScreenBoundaries(self.window)
 
     def setHotkeys(self):
         self.sentencehotkeyS = QShortcut(

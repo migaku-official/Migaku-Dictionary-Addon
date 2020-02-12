@@ -58,14 +58,8 @@ class MIDict(AnkiWebView):
         self.reviewer = False
         self.imager = googleimages.Google()
         self.imager.setSearchRegion(self.config['googleSearchRegion'])
-        self.imager.resultsFound.connect(self.loadImageResults)
         self.forvo =  Forvo(self.config['ForvoLanguage'])
-        self.forvo.resultsFound.connect(self.loadForvoResults)
         self.customFontsLoaded = []
-
-    def loadImageResults(self, results):
-        html, idName = results
-        self.eval("loadImageForvoHtml('%s', '%s');"%(html.replace('"', '\\"'), idName))
 
     def loadHTMLURL(self, html, url):
         self._page.setHtml(html, url)
@@ -134,6 +128,13 @@ class MIDict(AnkiWebView):
         html = html.replace('\n', '')
         return html, cleaned, singleTab;
 
+
+    def attemptFetchForvoLinks(self,term):
+        urls = self.forvo.search(term)
+        if len(urls) > 0:
+            return json.dumps(urls)
+        else:
+            return False
           
     def addNewTab(self, term, selectedGroup):
         if selectedGroup['customFont'] and selectedGroup['font'] not in self.customFontsLoaded:
@@ -244,30 +245,20 @@ class MIDict(AnkiWebView):
             html = '<style>.noresults{font-family: Arial;}.vertical-center{height: 400px; width: 60%; margin: 0 auto; display: flex; justify-content: center; align-items: center;}</style> </head> <div class="vertical-center noresults"> <div align="center"> <img src="icons/searchzero.svg" width="50px" height="40px"> <h3 align="center">No dictionary entries were found for "' + term + '".</h3> </div></div>'
         return html.replace("'", "\\'")
 
-    def attemptFetchForvo(self, term, idName):  
-        self.forvo.setTermIdName(term, idName)
-        self.forvo.start()
-        return 'Loading...'
-
-    def loadForvoResults(self, results):
-        forvoData, idName = results
-        if forvoData:
-            html = "<div class=\\'forvo\\'  data-urls=\\'" + forvoData +"\\'></div>"
-        else:
-            html = '<div class="no-forvo">No Results Found.</div>'
-        self.eval("loadImageForvoHtml('%s', '%s');loadForvoDict(false, '%s');"%(html.replace('"', '\\"'), idName, idName))
 
     def getForvoDictionaryResults(self, term, dictCount, bracketFront, bracketBack, entryCount, font):
         dictName = 'Forvo'
         overwrite = self.getOverwriteChecks(dictCount, dictName )
         select = self.getFieldChecks(dictName)
-        idName = 'fcon' + str(time.time())
-        self.attemptFetchForvo(term, idName)
+        forvoData = self.attemptFetchForvoLinks(term)
         html = '<div data-index="' + str(dictCount)  +'" class="dictionaryTitleBlock"><div class="dictionaryTitle">'+ dictName +'</div><div class="dictionarySettings">' + overwrite + select + '<div class="dictNav"><div onclick="navigateDict(event, false)" class="prevDict">▲</div><div onclick="navigateDict(event, true)" class="nextDict">▼</div></div></div></div>'
         html += ('<div  data-index="' + str(entryCount)  +'"  class="termPronunciation"><span class="tpCont">' + bracketFront+ '<span ' + font +' class="terms">' +  
                         self.highlightTarget(term, term) +
-                        '</span>' + bracketBack + ' <span></span></span><div class="defTools"><div onclick="ankiExport(event, \''+ dictName +'\')" class="ankiExportButton"><img src="icons/anki.png"></div><div onclick="clipText(event)" class="clipper">✂</div><div onclick="sendToField(event, \''+ dictName +'\')" class="sendToField">➠</div><div class="defNav"><div onclick="navigateDef(event, false)" class="prevDef">▲</div><div onclick="navigateDef(event, true)" class="nextDef">▼</div></div></div></div><div id="' + idName + '" class="definitionBlock">' )
-        html += 'Loading...'
+                        '</span>' + bracketBack + ' <span></span></span><div class="defTools"><div onclick="ankiExport(event, \''+ dictName +'\')" class="ankiExportButton"><img src="icons/anki.png"></div><div onclick="clipText(event)" class="clipper">✂</div><div onclick="sendToField(event, \''+ dictName +'\')" class="sendToField">➠</div><div class="defNav"><div onclick="navigateDef(event, false)" class="prevDef">▲</div><div onclick="navigateDef(event, true)" class="nextDef">▼</div></div></div></div><div class="definitionBlock">' )
+        if forvoData:
+            html += "<div class='forvo'  data-urls='" + forvoData +"'></div>"
+        else:
+            html += '<div class="no-forvo">No Results Found.</div>'
         html += '</div>'
         return html
 
@@ -275,19 +266,34 @@ class MIDict(AnkiWebView):
         dictName = 'Google Images'
         overwrite = self.getOverwriteChecks(dictCount, dictName )
         select = self.getFieldChecks( dictName)
-        idName = 'gcon' + str(time.time())
         html = '<div data-index="' + str(dictCount)  +'" class="dictionaryTitleBlock"><div class="dictionaryTitle">Google Images</div><div class="dictionarySettings">' + overwrite + select + '<div class="dictNav"><div onclick="navigateDict(event, false)" class="prevDict">▲</div><div onclick="navigateDict(event, true)" class="nextDict">▼</div></div></div></div>'
         html += ('<div  data-index="' + str(entryCount)  +'" class="termPronunciation"><span class="tpCont">' + bracketFront+ '<span ' + font +' class="terms">' +  
                         self.highlightTarget(term, term) +
-                        '</span>' + bracketBack + ' <span></span></span><div class="defTools"><div onclick="ankiExport(event, \''+ dictName +'\')" class="ankiExportButton"><img src="icons/anki.png"></div><div onclick="clipText(event)" class="clipper">✂</div><div onclick="sendToField(event, \''+ dictName +'\')" class="sendToField">➠</div><div class="defNav"><div onclick="navigateDef(event, false)" class="prevDef">▲</div><div onclick="navigateDef(event, true)" class="nextDef">▼</div></div></div></div><div class="definitionBlock"><div class="imageBlock" id="' + idName +'">' + self.getGoogleImages(term, idName)
+                        '</span>' + bracketBack + ' <span></span></span><div class="defTools"><div onclick="ankiExport(event, \''+ dictName +'\')" class="ankiExportButton"><img src="icons/anki.png"></div><div onclick="clipText(event)" class="clipper">✂</div><div onclick="sendToField(event, \''+ dictName +'\')" class="sendToField">➠</div><div class="defNav"><div onclick="navigateDef(event, false)" class="prevDef">▲</div><div onclick="navigateDef(event, true)" class="nextDef">▼</div></div></div></div><div class="definitionBlock"><div class="imageBlock">' + self.getGoogleImages(term)
                          + '</div></div>')
         return html           
 
-    def getGoogleImages(self, term, idName):  
-        self.imager.setTermIdName(term, idName)
-        self.imager.start()
-        return 'Loading...'
-        
+    def getGoogleImages(self, term):
+        images = self.imager.search(term, 80)
+        if not images or len(images) < 1:
+            return 'No Images Found. This is likely due to a connectivity error.'
+        firstImages = []
+        tempImages = []
+        for idx, image in enumerate(images):
+            tempImages.append(image) 
+            if len(tempImages) > 2 and len(firstImages) < 1:
+                firstImages += tempImages
+                tempImages = []
+            if len(tempImages) > 2 and len(firstImages) > 1:
+                break
+        html = '<div class="googleCont">'
+        for img in firstImages:
+            html+= '<div class="imgBox"><div onclick="toggleImageSelect(this)" data-url="'+ img +'" class="googleHighlight"></div><img class="googleImage"  src="' + img + '"></div>'
+        html += '</div><div class="googleCont">'
+        for img in tempImages:
+            html+= '<div class="imgBox"><div onclick="toggleImageSelect(this)" data-url="'+ img +'" class="googleHighlight"></div><img class="googleImage"  src="' + img + '"></div>'
+        html += '</div><button class="imageLoader" onclick="loadMoreImages(this, \'' + '\' , \''.join(self.getCleanedUrls(images)) +'\')">Load More</button>'
+        return html
 
     def getCleanedUrls(self, urls):
         return [x.replace('\\', '\\\\') for x in urls]
@@ -305,6 +311,7 @@ class MIDict(AnkiWebView):
         return '<div class="dupHeadCB" data-dictname="' + dictName + '">Duplicate Header:<input ' + checked + tooltip + ' class="' + className + '" onclick="handleDupChange(this, \'' + className + '\')" type="checkbox"></div>'
 
     def handleDictAction(self, dAct):
+
         if dAct.startswith('forvo:'):
             urls = json.loads(dAct[6:])
             self.downloadForvoAudio(urls)
@@ -719,6 +726,8 @@ class ClipThread(QObject):
     def handleSystemSearch(self):
         self.search.emit(Pyperclip.paste())
 
+
+     
     def handleImageExport(self):
         if self.checkDict():
             mime = self.mw.app.clipboard().mimeData()

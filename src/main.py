@@ -179,12 +179,13 @@ def loadDict(files, lang, dictName, frequencyDict, miDict = False, last = False)
     for count, entry in enumerate(jsonDict):
         fileC.setText("Importing word " + str(count) + " of " + strTotal + ".")
         if miDict:
-            handleMiDictEntry(tableName, entry, freq)
+            handleMiDictEntry(jsonDict, count, entry, freq)
         else: 
-            handleYomiDictEntry(tableName, entry, freq)
-        bar.setValue(count)
-        if count % 100 == 0:
+            handleYomiDictEntry(jsonDict, count, entry, freq)
+        if count % 5000 == 0:
+            bar.setValue(count)
             mw.app.processEvents() 
+    db.importToDict(tableName, jsonDict)
     bar.setValue(total)
     progressBar.hide()
     if last:
@@ -192,7 +193,20 @@ def loadDict(files, lang, dictName, frequencyDict, miDict = False, last = False)
     db.commitChanges()
     return
 
-def handleMiDictEntry(tableName, entry, freq = False):
+def getAdjustedTerm(term):
+    term = term.replace('\n', '')
+    if len(term) > 1:
+        term = term.replace('=', '')
+    return term
+
+def getAdjustedPronunciation(pronunciation):
+    return pronunciation.replace('\n', '')
+
+def getAdjustedDefinition(definition):
+    definition = definition.replace('\n', '<br>')
+    return re.sub(r'<br>$', '', definition)
+
+def handleMiDictEntry(jsonDict, count, entry, freq = False):
         starCount = ''
         frequency = ''
         if freq:
@@ -201,10 +215,13 @@ def handleMiDictEntry(tableName, entry, freq = False):
         reading = entry['pronunciation']
         if reading == '':
             reading = entry['term']
+        term = getAdjustedTerm(entry['term']) 
+        altTerm = getAdjustedTerm(entry['altterm'])
+        reading = getAdjustedPronunciation(reading)
+        definition = getAdjustedDefinition(entry['definition'])
+        jsonDict[count] = (term, altTerm, reading, entry['pos'], definition, '', '', frequency, starCount)
 
-        db.importToDict(tableName, entry['term'], entry['altterm'], reading, entry['pos'], entry['definition'].replace('\n', '<br>'), '', '', frequency, starCount)
-
-def handleYomiDictEntry(tableName, entry, freq = False):
+def handleYomiDictEntry(jsonDict, count, entry, freq = False):
         starCount = ''
         frequency = ''
         if freq:
@@ -213,7 +230,11 @@ def handleYomiDictEntry(tableName, entry, freq = False):
         reading = entry[1]
         if reading == '':
             reading = entry[0]
-        db.importToDict(tableName, entry[0], '', reading, entry[2], ','.join(entry[5]).replace('\n', '<br>'), '', '', frequency, starCount)
+        term = getAdjustedTerm(entry[0])
+        reading = getAdjustedPronunciation(reading)
+        definition = getAdjustedDefinition(', '.join(entry[5]))
+        jsonDict[count] = (term, '', reading, entry[2], definition, '', '', frequency, starCount)
+
 
 def kaner(to_translate, hiraganer = False):
         hiragana = u"がぎぐげござじずぜぞだぢづでどばびぶべぼぱぴぷぺぽ" \
@@ -292,8 +313,8 @@ def organizeDictionaryByFrequency(jsonDict, frequencyDict, dictName, lang, miDic
                 else: 
                     jsonDict[idx].append(999999)
                     jsonDict[idx].append('')
+        if idx % 5000 == 0:
             bar.setValue(idx)
-        if idx % 100 == 0:
             mw.app.processEvents()
     bar.hide()
     if miDict:
