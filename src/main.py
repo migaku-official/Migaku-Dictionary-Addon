@@ -203,7 +203,9 @@ def getAdjustedPronunciation(pronunciation):
     return pronunciation.replace('\n', '')
 
 def getAdjustedDefinition(definition):
-    definition = definition.replace('\n', '<br>')
+    definition = definition.replace('<br>','◟')
+    definition = definition.replace('<', '&lt;').replace('>', '&gt;')
+    definition = definition.replace('◟','<br>').replace('\n', '<br>')
     return re.sub(r'<br>$', '', definition)
 
 def handleMiDictEntry(jsonDict, count, entry, freq = False):
@@ -481,7 +483,7 @@ def captureKey(keyList):
         elif ('Key.cmd' in mw.currentlyPressed or 'Key.cmd_r' in mw.currentlyPressed) and 'Key.enter' in mw.currentlyPressed:
             mw.hkThread.attemptAddCard()
             mw.currentlyPressed = []
-        elif ('Key.cmd' in mw.currentlyPressed or 'Key.cmd_r' in mw.currentlyPressed) in mw.currentlyPressed and "'v'" in mw.currentlyPressed:
+        elif ('Key.cmd' in mw.currentlyPressed or 'Key.cmd_r' in mw.currentlyPressed) and 'Key.shift' in mw.currentlyPressed and "'v'" in mw.currentlyPressed:
             mw.hkThread.handleImageExport()
             mw.currentlyPressed = []
 
@@ -610,7 +612,7 @@ def initGlobalHotkeys():
     mw.hkThread.release.connect(releaseKey)
     mw.hkThread.run()
 
-if mw.addonManager.getConfig(__name__)['globalHotkeys']:
+if mw.addonManager.getConfig(__name__)['globalHotkeys'] and not isLin:
     initGlobalHotkeys()
 
 mw.hotkeyW = QShortcut(QKeySequence("Ctrl+W"), mw)
@@ -1130,15 +1132,3 @@ def miLinks(self, cmd):
 ogLinks = Reviewer._linkHandler
 Reviewer._linkHandler = miLinks
 Reviewer.show = wrap(Reviewer.show, addBodyClick)
-
-
-
-    
-
-
-
-
-
-
-
-# var defaultProtocol = 'https:';

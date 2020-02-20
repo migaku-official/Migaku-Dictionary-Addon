@@ -198,7 +198,7 @@ class DictDB:
 
     def applySearchType(self,terms, sT):
         for idx, term in enumerate(terms):
-            if sT ==  'Forward':
+            if sT in  ['Forward','Pronunciation']:
                terms[idx] = terms[idx] + '%';
             elif sT ==  'Backward':
                 terms[idx] = '%_' + terms[idx]
@@ -213,13 +213,19 @@ class DictDB:
     def deconjugate(self, term, conjugations):
         deconjugations = []
         for c in conjugations:
-            if term.endswith(c['inflected']):
+            if term.endswith(c['inflected']): 
                 for x in c['dict']:
                     deinflected = self.rreplace(term, c['inflected'], x, 1)
+                    if 'prefix' in c:
+                        prefix = c['prefix']
+                        if deinflected.startswith(prefix):
+                            deprefixedDeinflected =  deinflected[len(prefix):]
+                            if deprefixedDeinflected not in deconjugations:
+                                deconjugations.append(deprefixedDeinflected)
                     if deinflected not in deconjugations:
                         deconjugations.append(deinflected)
         deconjugations = list(filter(lambda x: len(x) > 1, deconjugations))  
-        deconjugations.insert(0, term)      
+        deconjugations.insert(0, term)    
         return deconjugations
 
     def rreplace(self, s, old, new, occurrence):
@@ -232,6 +238,15 @@ class DictDB:
         group = selectedGroup['dictionaries']
         totalDefs = 0
         defEx = self.getDefEx(sT)
+        op = 'LIKE'
+        if defEx:
+            column = 'definition'
+        elif sT == 'Pronunciation':
+            column = 'pronunciation'
+        else:
+            column = 'term'
+        if sT == 'Exact':
+            op = '='
         for dic in group:
             if dic['dict'] == 'Google Images':
                 results['Google Images'] = True
@@ -256,13 +271,7 @@ class DictDB:
                 else:
                     terms = self.applySearchType(terms, sT)
                     alreadyConjTyped[term] = terms
-            if defEx:
-                column = 'definition'
-            else:
-                column = 'term'
-            op = 'LIKE'
-            if sT == 'Exact':
-                op = '='
+            
             toQuery = self.getQueryCriteria(column, terms, op)  
             termTuple = tuple(terms)  
             allRs = self.executeSearch(dic['dict'], toQuery, dictLimit, termTuple)
@@ -275,7 +284,7 @@ class DictDB:
                         results[self.cleanDictName(dic['dict'])] = dictRes
                         return results
                 results[self.cleanDictName(dic['dict'])] = dictRes
-            elif not defEx:
+            elif not defEx and not sT == 'Pronunciation':
                 columns = ['altterm', 'pronunciation']
                 for col in columns:
                     toQuery = self.getQueryCriteria(col, terms, op)  
@@ -339,16 +348,6 @@ class DictDB:
         self.c.execute("CREATE INDEX IF NOT EXISTS iap" + text +" ON " + text +" ( altterm, pronunciation );")
         self.c.execute("CREATE INDEX IF NOT EXISTS ia" + text +" ON " + text +" (pronunciation);")
 
-    # def importToDict(self, dictName, term, altTerm, pronunciation, pos, definition, examples, audio, frequency, starCount):
-    #     term = term.replace('\n', '')
-    #     definition = re.sub(r'<br>$', '', definition)
-    #     if len(term) > 1:
-    #         term = term.replace('=', '')
-    #     altTerm = altTerm.replace('\n', '').replace('=', '')
-    #     pronunciation = pronunciation.replace('\n', '')
-    #     definition = definition.replace('\n', '<br>')
-    #     self.c.execute('INSERT INTO ' + dictName + ' (term, altterm, pronunciation, pos, definition, examples, audio, frequency, starCount) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);', (self.cleanLT(term), self.cleanLT(altTerm), self.cleanLT(pronunciation), self.cleanLT(pos), self.cleanLT(definition), self.cleanLT(examples), audio, frequency, starCount))
-
     def importToDict(self, dictName, dictionaryData):
         self.c.executemany('INSERT INTO ' + dictName + ' (term, altterm, pronunciation, pos, definition, examples, audio, frequency, starCount) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);', dictionaryData)
 
@@ -397,7 +396,6 @@ class DictDB:
     def setDupHeader(self,duplicateHeader, name):
         self.c.execute('UPDATE dictnames SET duplicateHeader = ? WHERE dictname=?', (duplicateHeader, name))
         self.commitChanges()
-
 
     def getTermHeaders(self):
         self.c.execute('SELECT dictname, termHeader FROM dictnames')

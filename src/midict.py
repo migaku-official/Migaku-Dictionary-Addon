@@ -32,7 +32,7 @@ import datetime
 import codecs
 from .forvodl import Forvo
 import ntpath
-        
+from .miutils import miInfo
 
 class MIDict(AnkiWebView):
 
@@ -59,9 +59,14 @@ class MIDict(AnkiWebView):
         self.imager = googleimages.Google()
         self.imager.setSearchRegion(self.config['googleSearchRegion'])
         self.imager.resultsFound.connect(self.loadImageResults)
+        self.imager.noResults.connect(self.showGoogleForvoMessage)
         self.forvo =  Forvo(self.config['ForvoLanguage'])
         self.forvo.resultsFound.connect(self.loadForvoResults)
+        self.forvo.noResults.connect(self.showGoogleForvoMessage)
         self.customFontsLoaded = []
+
+    def showGoogleForvoMessage(self, message):
+        miInfo(message, level='err')
 
     def loadImageResults(self, results):
         html, idName = results
@@ -141,7 +146,8 @@ class MIDict(AnkiWebView):
             self.injectFont(selectedGroup['font'])
         html, cleaned, singleTab= self.getHTMLResult(term, selectedGroup)
         # Pyperclip.copy("addNewTab('%s', '%s', %s);"%(html, cleaned, singleTab))
-        self.eval("addNewTab('%s', '%s', %s);"%(html, cleaned, singleTab))
+        # showInfo(term)
+        self.eval("addNewTab('%s', '%s', %s);"%(html.replace('\r', '<br>').replace('\n','<br>'), cleaned, singleTab))
         
     def addResultWrappers(self, results):
         for idx, result in enumerate(results):
@@ -819,10 +825,11 @@ class DictInterface(QWidget):
         self.config = self.getConfig()
         self.defaultGroups = self.db.getDefaultGroups()
         self.userGroups = self.getUserGroups()
-        self.searchOptions = ['Forward', 'Backward', 'Exact', 'Definition', 'Example']
+        self.searchOptions = ['Forward', 'Backward', 'Exact', 'Definition', 'Example', 'Pronunciation']
         self.setWindowTitle("Dictionary")
         self.dictGroups = self.setupDictGroups()
         self.nightModeToggler = self.setupNightModeToggle()
+        self.setSvg(self.nightModeToggler, 'theme')
         self.dict = MIDict(self, self.db, self.addonPath, self.nightModeToggler.day, term)
         self.conjToggler = self.setupConjugationMode()
         self.minusB = self.setupMinus()
@@ -994,8 +1001,7 @@ class DictInterface(QWidget):
             self.sType.setFixedHeight(38)
             self.dictGroups.setFixedSize(110,38)
             self.search.setFixedSize(114, 38)
-            # self.search.setStyleSheet('margin-right:-1px;')
-        # layoutH.addStretch()
+
         layoutH.setContentsMargins(1,1,0,0)
         layoutH.setSpacing(1)
         self.layoutH2.addWidget(self.openSB)
@@ -1023,7 +1029,6 @@ class DictInterface(QWidget):
         self.mainHLay.addLayout(self.layoutH2) 
         self.mainHLay.addStretch()
         layoutV.addLayout(self.mainHLay) 
-        # layoutV.addLayout(self.layoutH2) 
         layoutV.addWidget(self.dict)
         layoutV.setContentsMargins(0,0,0,0)
         layoutV.setSpacing(1)
@@ -1047,87 +1052,67 @@ class DictInterface(QWidget):
             self.verticalBar = False
             self.toggleMenuBar(False)
         event.accept()
-        # QtGui.QMainWindow.resizeEvent(self, event) 
 
 
     def setupSearchButton(self):
-        searchB =  QPushButton('')
-        searchB.setIcon(self.getIcon('search'))
-        searchB.setIconSize(QSize(40,40))
-        searchB.setFixedHeight(40)
-        searchB.setFixedWidth(43)
-        searchB.setContentsMargins(0,0,0,0)
+        searchB =  SVGPushButton(40,40)
+        self.setSvg(searchB, 'search')
         searchB.clicked.connect(self.initSearch)
         return searchB
 
+
     def setupOpenSB(self):
-        openSB = QPushButton(' ')
-        openSB.setIcon(self.getIcon('sidebaropen'))
-        openSB.setFixedHeight(40)
-        openSB.setFixedWidth(43)
-        openSB.setIconSize(QSize(40,40))
-        openSB.setContentsMargins(0,0,0,0)
+        openSB = SVGPushButton(40,40)
+        self.setSvg(openSB, 'sidebaropen')
         openSB.clicked.connect(self.toggleSB)
         return openSB
 
     def toggleSB(self):
         if not self.openSB.opened:
             self.openSB.opened = True
-            self.openSB.setIcon(self.getIcon('sidebarclose'))
+            self.setSvg(self.openSB, 'sidebarclose')
         else:
             self.openSB.opened = False
-            self.openSB.setIcon(self.getIcon('sidebaropen'))
+            self.setSvg(self.openSB, 'sidebaropen')
         self.dict.eval('openSidebar()')
     
     def setupTabMode(self):
-        TabMode =  QPushButton('')
+        TabMode = SVGPushButton(34,34)
         if self.config['onetab']:
             TabMode.singleTab = True
             icon = 'onetab'
         else:
             TabMode.singleTab = False
             icon = 'tabs'
-        TabMode.setIcon(self.getIcon('tabs'))
-        TabMode.setIconSize(QSize(34,34))
-        TabMode.setFixedHeight(40)
-        TabMode.setFixedWidth(43)
-        TabMode.setContentsMargins(0,0,0,0)
+        self.setSvg(TabMode, icon)
         TabMode.clicked.connect(self.toggleTabMode)
         return TabMode
 
     def toggleTabMode(self):
         if self.tabB.singleTab:
             self.tabB.singleTab = False
-            self.tabB.setIcon(self.getIcon('tabs'))
+            self.setSvg(self.tabB, 'tabs')
             self.writeConfig('onetab', False)
         else:
             self.tabB.singleTab = True
-            self.tabB.setIcon(self.getIcon('onetab'))
+            self.setSvg(self.tabB, 'onetab')
             self.writeConfig('onetab', True)
        
     def setupConjugationMode(self):
-        conjugationMode = QPushButton('')
+        conjugationMode = SVGPushButton(40,40)
         if self.config['deinflect']:
             self.dict.deinflect = True
             icon = 'conjugation'
         else:
             self.dict.deinflect = False
             icon = 'closedcube'
-        conjugationMode.setIcon(self.getIcon(icon))
-        conjugationMode.setIconSize(QSize(40,40))
-        conjugationMode.setFixedHeight(40)
-        conjugationMode.setFixedWidth(43)
-        conjugationMode.setContentsMargins(0,0,0,0)
+        self.setSvg(conjugationMode, icon)
         conjugationMode.clicked.connect(self.toggleConjugationMode)
         return conjugationMode
 
     def setupOpenHistory(self):
-        history = QPushButton('')
-        history.setIcon(self.getIcon('history'))
-        history.setFixedHeight(40)
-        history.setFixedWidth(43)
-        history.setIconSize(QSize(40,40))
-        history.setContentsMargins(0,0,0,0)
+        history = SVGPushButton(40,40)
+        self.setSvg(history, 'history')
         history.clicked.connect(self.openHistory)
         return history
 
@@ -1137,12 +1122,12 @@ class DictInterface(QWidget):
     
     def toggleConjugationMode(self):
         if not self.dict.deinflect:
-            self.conjToggler.setIcon(self.getIcon('conjugation'))
+            self.setSvg(self.conjToggler, 'conjugation')
             self.dict.deinflect = True
             self.writeConfig('deinflect', True)
 
         else:
-            self.conjToggler.setIcon(self.getIcon('closedcube'))
+            self.setSvg(self.conjToggler, 'closedcube')
             self.dict.deinflect = False
             self.writeConfig('deinflect', False)
 
@@ -1186,34 +1171,29 @@ class DictInterface(QWidget):
             self.nightModeToggler.day = True
             self.writeConfig('day', True)
             self.dict.eval('nightModeToggle(false)')
-            self.nightModeToggler.setIcon(self.getDayNight(True))
+            self.setSvg(self.nightModeToggler, 'theme')
             self.loadDay() 
         else:
             self.nightModeToggler.day = False
             self.dict.eval('nightModeToggle(true)')
-            self.nightModeToggler.setIcon(self.getDayNight(False))
+            self.setSvg(self.nightModeToggler, 'theme')
             self.writeConfig('day', False)
             self.loadNight()
-            
-    def getIcon(self, name):
+     
+    def setSvg(self, widget, name):
         if self.nightModeToggler.day:
-            return QIcon(join(self.iconpath,  name + '.png'))
-        return QIcon(join(self.iconpath,  name + 'night.png'))
-
-    def getDayNight(self, day):
-        if day:
-            return QIcon(join(self.iconpath,   'night.png'))
-        return QIcon(join(self.iconpath,   'day.png'))
+            return widget.setSvg(join(self.iconpath, 'dictsvgs', name + '.svg'))
+        return widget.setSvg(join(self.iconpath, 'dictsvgs', name + 'night.svg'))
 
     def setAllIcons(self):
-        self.setB.setIcon(self.getIcon('settings'))
-        self.plusB.setIcon(self.getIcon('plus'))
-        self.minusB.setIcon(self.getIcon('minus'))
-        self.histB.setIcon(self.getIcon('history'))
-        self.searchButton.setIcon(self.getIcon('search'))
-        self.tabB.setIcon(self.getIcon(self.getTabStatus()))
-        self.openSB.setIcon(self.getIcon(self.getSBStatus()))
-        self.conjToggler.setIcon(self.getIcon(self.getConjStatus()))
+        self.setSvg( self.setB, 'settings')
+        self.setSvg( self.plusB, 'plus')
+        self.setSvg( self.minusB, 'minus')
+        self.setSvg( self.histB, 'history')
+        self.setSvg( self.searchButton, 'search')
+        self.setSvg( self.tabB, self.getTabStatus())
+        self.setSvg( self.openSB, self.getSBStatus())
+        self.setSvg( self.conjToggler, self.getConjStatus())
 
     def getConjStatus(self):
         if self.dict.deinflect:
@@ -1231,23 +1211,14 @@ class DictInterface(QWidget):
         return 'tabs'
    
     def setupNightModeToggle(self):
-        nightToggle = QPushButton('')
+        nightToggle = SVGPushButton(40,40)
         nightToggle.day = self.config['day']
-        nightToggle.setIcon(self.getDayNight(nightToggle.day))
-        nightToggle.setFixedHeight(40)
-        nightToggle.setFixedWidth(43)
-        nightToggle.setIconSize(QSize(40,40))
-        nightToggle.setContentsMargins(0,0,0,0)
         nightToggle.clicked.connect(self.toggleNightMode)
         return nightToggle
 
     def setupOpenSettings(self):
-        settings = QPushButton('')
-        settings.setIcon(self.getIcon('settings'))
-        settings.setFixedHeight(40)
-        settings.setFixedWidth(43)
-        settings.setIconSize(QSize(40,40))
-        settings.setContentsMargins(0,0,0,0)
+        settings = SVGPushButton(40,40)
+        self.setSvg(settings, 'settings')
         settings.clicked.connect(self.openDictionarySettings)
         return settings
 
@@ -1262,22 +1233,14 @@ class DictInterface(QWidget):
         self.mw.dictSettings.activateWindow()
    
     def setupPlus(self):
-        plusB = QPushButton('')
-        plusB.setIcon(self.getIcon('plus'))
-        plusB.setFixedHeight(40)
-        plusB.setFixedWidth(43)
-        plusB.setIconSize(QSize(40,40))
-        plusB.setContentsMargins(0,0,0,0)
+        plusB = SVGPushButton(40,40)
+        self.setSvg(plusB, 'plus')
         plusB.clicked.connect(self.incFont)
         return plusB
 
     def setupMinus(self):
-        minusB = QPushButton('')
-        minusB.setIcon(self.getIcon('minus'))
-        minusB.setFixedHeight(40)
-        minusB.setFixedWidth(43)
-        minusB.setIconSize(QSize(40,40))
-        minusB.setContentsMargins(0,0,0,0)
+        minusB = SVGPushButton(40,40)
+        self.setSvg(minusB, 'minus')
         minusB.clicked.connect(self.decFont)
         return minusB
 
@@ -1369,6 +1332,7 @@ class DictInterface(QWidget):
         self.addToHistory(term)
         self.dict.addNewTab(term, selectedGroup)
         self.search.setFocus()
+
 
     def addToHistory(self, term):
         date = str(datetime.date.today())
@@ -1523,19 +1487,6 @@ QScrollBar:vertical {
         }
 
         '''
-
-  # QTableWidget, QTableView {
-     #     color:black;
-     #     background-color: white;
-     #     selection-background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 white, stop: 1 silver);
-     # }
-     #    QTableWidget QTableCornerButton::section, QTableView QTableCornerButton::section{
-     #     color:black;
-     #     background: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 white, stop: 1 silver);
-     #     border: 1px solid black;
-     # }
-
-
 
     def getComboStyle(self):
         return  '''
@@ -1714,3 +1665,34 @@ QScrollBar:vertical {
         subcontrol-position: top;
         subcontrol-origin: margin;
     }'''
+
+class MIASVG(QSvgWidget):
+    clicked=pyqtSignal()
+    def __init__(self, parent=None):
+        QSvgWidget.__init__(self, parent)
+
+    def mousePressEvent(self, ev):
+        self.clicked.emit()
+
+
+class SVGPushButton(QPushButton):
+    def __init__(self, width, height):
+        QPushButton.__init__(self)
+        # self.setSizePolicy( QSizePolicy.Preferred, QSizePolicy.Preferred )
+        self.setFixedHeight(40)
+        self.setFixedWidth(43)
+        self.svgWidth = width
+        self.svgHeight = height
+        self.layout = QHBoxLayout()
+        self.layout.setContentsMargins(0,0,0,0)
+        self.setContentsMargins(0,0,0,0)
+        self.setLayout(self.layout)
+
+    def setSvg(self, svgPath):
+        for i in reversed(range(self.layout.count())): 
+            self.layout.itemAt(i).widget().setParent(None)
+        svg = QSvgWidget(svgPath)
+        svg.setFixedSize(self.svgWidth, self.svgHeight)
+        self.layout.addWidget(svg)
+
+

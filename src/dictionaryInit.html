@@ -26,18 +26,20 @@
     z-index: 100;
 }
 
+
 .forvo-play{
     position:relative;
     bottom: 3px;
     height:20px;
     width:200px;
     border-radius: 5px;
-
 }
+
 
 .forvo-play-box{
     padding:10px 10px;
 }
+
 
 .hidden-forvo{
     display: none;
@@ -591,19 +593,42 @@ hr{
         }  
     }
 
+
+     function getWordPron(dictEl, termBody, termTitle){
+        var dupHeader = dictEl.querySelector('.dupHeadCB input').checked;
+        var terms = termTitle.getElementsByClassName('mainword');
+        var stars = termTitle.getElementsByClassName('starcount')[0].textContent;
+        var word = '';
+        var term1 = terms[0].textContent;
+        var term2 = terms[1].textContent;
+        if(term1 != '' && term2 != ''){
+            word = term1 +', ' + term2
+        }else if(term1 != ''){
+            word = term1
+        }else if(term2 != ''){
+            word = term2
+        }
+        
+        wordPron = termTitle.querySelector('.tpCont').textContent + '\n';
+        return wordPron;
+    }
+
     function clipText(ev){
         var definition = getSelectionText();
-        if(! definition){
-        termTitle = event.target.parentElement.parentElement
-        termBody = termTitle.nextElementSibling
-        dictionaryElement = termTitle.previousElementSibling
+        var termTitle = event.target.parentElement.parentElement
+        var termBody = termTitle.nextElementSibling
+        var dictionaryElement = termTitle.previousElementSibling
         while (!dictionaryElement.classList.contains('dictionaryTitleBlock')){
             dictionaryElement = dictionaryElement.previousElementSibling
         }
-        var wordDefinition= getDefinitionWord(dictionaryElement, termBody, termTitle)
-        definition = wordDefinition[1]
+        if(! definition){
+            var wordDefinition= getDefinitionWord(dictionaryElement, termBody, termTitle)
+            definition = wordDefinition[1]
+        }else{
+            var wordDefinition = getWordPron(dictionaryElement, termBody, termTitle)
+            definition = wordDefinition + '\n' + definition
         }
-        pycmd('clipped:' + definition);
+        pycmd('clipped:' + definition.replace('&lt', '<').replace('&gt;', '>'));
     }
     
     function getDefForField(event, dictName){
@@ -802,8 +827,8 @@ hr{
         defBox.insertBefore(cont, button);
         setTimeout(function(){
             var w = button.closest('#defBox');
-            w.scrollTop = button.offsetTop - 300;
-        },1000)  
+            w.scrollTop = button.offsetTop - 500;
+        }, 650)  
     }
 
     function handleBodyClick(ev){
@@ -1102,7 +1127,6 @@ hr{
 
     }
 
-
 function attemptCloseFirstTab(){
     var curTabs = document.getElementsByClassName('active');
     if(curTabs.length == 1){
@@ -1112,32 +1136,6 @@ function attemptCloseFirstTab(){
 
     }
 }    
-
- // function loadMoreImages(button, ...rest){
- //        var urls = rest;
- //        var defBox = button.parentElement;
- //        var imageCount = defBox.getElementsByClassName('googleImage').length;
- //        if(imageCount > urls.length) return;
- //        var toLoad = urls.slice(imageCount, imageCount + 3);
- //        loadNewImages(toLoad, defBox, button);
- //    }
-
- //    function loadNewImages(toLoad, defBox, button){
- //        var cont = document.createElement('div')
- //        cont.classList.add('googleCont')
- //        var html = '<div class="googleCont">'
- //        for(var i = 0; i < toLoad.length; i++){
- //            img = toLoad[i]
- //            html+= '<div class="imgBox"><div onclick="toggleImageSelect(this)" data-url="'+ img +'" class="googleHighlight"></div><img class="googleImage"  src="' + img + '"></div>'
- //        }
- //        cont.innerHTML = html;
- //        defBox.insertBefore(cont, button);
- //        setTimeout(function(){
- //            var w = button.closest('#defBox');
- //            w.scrollTop = button.offsetTop - 300;
- //        },1000)  
- //    }
-
 
 function loadMoreForvos(button){
     var forvoParent = button.parentElement;

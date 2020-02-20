@@ -258,6 +258,7 @@ countryCodes = {"Afghanistan" : "countryAF",
 class Google(QThread):
 
     resultsFound = pyqtSignal(list)
+    noResults = pyqtSignal(str)
 
     def __init__(self):
         QThread.__init__(self)
@@ -293,10 +294,13 @@ class Google(QThread):
         page = 0
         while True:
             params = urllib.parse.urlencode(
-                {"q": keyword, "tbm": "isch", "ijn": str(page)}
+                {"q": keyword, "tbm": "isch"}
             )
-
-            yield self.GOOGLE_SEARCH_URL + "?" + params
+            if self.region == 'Japan':
+                url = 'https://www.google.co.jp/search'
+            else:
+                url = self.GOOGLE_SEARCH_URL
+            yield url + "?" + params
             page += 1
 
     def setSearchRegion(self, region):
@@ -370,7 +374,7 @@ class Google(QThread):
                         finished = True
                         break
             except:
-                showInfo('The Google Image Dictionary could not establish a connection. Please ensure you are connected to the internet and try again. If you will be without internet for some time, consider using a template that does not include the Google Images Dictionary in order to prevent this message appearing everytime a search is performed. ')
+                self.noResults.emit('The Google Image Dictionary could not establish a connection. Please ensure you are connected to the internet and try again. If you will be without internet for some time, consider using a template that does not include the Google Images Dictionary in order to prevent this message appearing everytime a search is performed. ')
                 return False
 
             results = self.getResultsFromRawHtml(html)

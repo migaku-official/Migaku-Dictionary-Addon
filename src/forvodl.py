@@ -87,6 +87,7 @@ languages = {"German" : "de",
 class Forvo(QThread):
 
     resultsFound = pyqtSignal(list)
+    noResults = pyqtSignal(str)
 
     def __init__(self, language):
         QThread.__init__(self)
@@ -111,13 +112,14 @@ class Forvo(QThread):
             resultList = [self.attemptFetchForvoLinks(self.term), self.idName]
             self.resultsFound.emit(resultList)
 
+
     def search(self, term, lang = False):
         if lang and self.selLang != lang:
             self.selLang = lang
             self.langShortCut = languages[self.selLang]
             self.GOOGLE_SEARCH_URL = "https://forvo.com/word/◳t/#" + self.langShortCut
         query = self.GOOGLE_SEARCH_URL.replace('◳t', re.sub(r'[\/\'".,&*@!#()\[\]\{\}]', '', term))
-        return self.image_search(query)
+        return self.forvo_search(query)
 
     def decodeURL(self, url1, url2, protocol, audiohost, server):
         url2 = protocol + "//" + server + "/player-mp3-highHandler.php?path=" + url2;
@@ -152,11 +154,11 @@ class Forvo(QThread):
     def setSearchRegion(self, region):
         self.region = region
 
-    def image_search(self, query_gen):
+    def forvo_search(self, query_gen):
         try:
             html = self.session.get(query_gen).text
         except:
-            showInfo('The Forvo Dictionary could not be loaded, please confirm that your are connected to the internet and try again. ')
+            self.noResults.emit('The Forvo Dictionary could not be loaded, please confirm that your are connected to the internet and try again. ')
             return []
         results = html
             
