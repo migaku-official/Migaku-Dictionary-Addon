@@ -626,7 +626,7 @@ hr{
             definition = wordDefinition[1]
         }else{
             var wordDefinition = getWordPron(dictionaryElement, termBody, termTitle)
-            definition = wordDefinition + '\n' + definition
+            definition = wordDefinition + definition
         }
         pycmd('clipped:' + definition.replace('&lt', '<').replace('&gt;', '>'));
     }
