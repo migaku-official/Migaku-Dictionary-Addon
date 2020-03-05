@@ -1347,9 +1347,12 @@ class DictInterface(QWidget):
 
     def getHistory(self):
         path = join(self.mw.col.media.dir(), '_searchHistory.json')
-        if exists(path):
-            with open(path, "r", encoding="utf-8") as histFile:
-                return json.loads(histFile.read())
+        try:
+            if exists(path):
+                with open(path, "r", encoding="utf-8") as histFile:
+                    return json.loads(histFile.read())
+        except:
+            return []
         return []
 
     def updateFieldsSetting(self, dictName, fields):
