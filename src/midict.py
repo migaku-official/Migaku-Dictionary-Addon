@@ -947,6 +947,8 @@ class DictInterface(QWidget):
         self.currentTarget.setText('')
         self.dict.currentEditor = False
         self.dict.reviewer = False
+        self.dict.close()
+        self.dict.deleteLater()
         self.deleteLater()
         self.mw.miaDictionary = False
         self.mw.openMiDict.setText("Open Dictionary (Ctrl+W)")

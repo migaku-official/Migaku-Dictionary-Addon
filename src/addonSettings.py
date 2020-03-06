@@ -107,6 +107,18 @@ class SettingsGui(QTabWidget):
         self.resize(920, 550)
         self.show()
 
+    def hideEvent(self, event):
+        self.mw.dictSettings = None
+        self.userGuideTab.close()
+        self.userGuideTab.deleteLater()
+        event.accept()
+
+    def closeEvent(self, event):
+        self.mw.dictSettings = None
+        self.userGuideTab.close()
+        self.userGuideTab.deleteLater()
+        event.accept()
+
     def initTooltips(self):
         self.addDictGroup.setToolTip('Add a new dictionary group.\nDictionary groups allow you to specify which dictionaries to search\nwithin. You can also set a specific font for that group.')
         self.addExportTemplate.setToolTip('Add a new export template.\nExport templates allow you to specify a note type, and fields where\ntarget sentences, target words, definitions, and images will be sent to\n when using the Card Exporter to create cards.')
@@ -335,12 +347,10 @@ class SettingsGui(QTabWidget):
         if miAsk('This will remove any export templates and dictionary groups you have created, and is not undoable. Are you sure you would like to restore the default settings?'):
             conf = self.mw.addonManager.addonConfigDefaults(dirname(__file__))
             self.mw.addonManager.writeConfig(__name__, conf)
+            self.userGuideTab.close()
+            self.userGuideTab.deleteLater()
             self.close()
             self.reboot()
-
-    def closeEvent(self, event):
-        self.mw.dictSettings = None
-        event.accept() 
 
     def addGroup(self):
         if not self.dictEditor:

@@ -9,7 +9,6 @@ from aqt.qt import *
 from aqt.utils import openLink, tooltip, showInfo, askUser
 from anki.utils import isMac, isWin, isLin
 from anki.lang import _
-from aqt.webview import AnkiWebView
 import re
 from . import Pyperclip 
 import os

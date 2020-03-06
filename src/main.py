@@ -562,6 +562,8 @@ def dictionaryInit(term = False):
         mw.miaDictionary.hide()
         mw.openMiDict.setText("Open Dictionary "+ shortcut)
     else:
+        mw.miaDictionary.dict.close()
+        mw.miaDictionary.dict.deleteLater()
         mw.miaDictionary.deleteLater()
         mw.miaDictionary = DictInterface(mw, addon_path, welcomeScreen, term = term)
         mw.openMiDict.setText("Close Dictionary "+ shortcut)
