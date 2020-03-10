@@ -955,6 +955,8 @@ def exportDefinitions(og, dest, addType, dictNs, howMany, notes, generateWidget,
         if og in fields and dest in fields:
             term = re.sub(r'<[^>]+>', '', note[og]) 
             term = re.sub(r'\[[^\]]+?\]', '', term)
+            if term == '':
+                continue
             tresults = []
             dCount = 0
             for dictN in dictNs:
