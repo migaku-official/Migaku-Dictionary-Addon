@@ -308,7 +308,7 @@ class Google(QThread):
 
 
     def getResultsFromRawHtml(self, html):
-        pattern = r"AF_initDataCallback\({key: 'ds:2',[^^]+?return (\[[^^]+\])[^^]+?<\/body><\/html>"
+        pattern = r"AF_initDataCallback[\s\S]+AF_initDataCallback\({key: '[\s\S]+?',[\s\S]+?return (\[[\s\S]+\])[\s\S]+?<\/body><\/html>"
         matches = re.findall(pattern, html)
         results = []
         try:
@@ -376,7 +376,6 @@ class Google(QThread):
             except:
                 self.noResults.emit('The Google Image Dictionary could not establish a connection. Please ensure you are connected to the internet and try again. If you will be without internet for some time, consider using a template that does not include the Google Images Dictionary in order to prevent this message appearing everytime a search is performed. ')
                 return False
-
             results = self.getResultsFromRawHtml(html)
             if len(results) == 0:
                 soup = BeautifulSoup(html, "html.parser")
