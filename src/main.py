@@ -37,7 +37,7 @@ import os
 mw.MIADictConfig = mw.addonManager.getConfig(__name__)
 mw.MIAExportingDefinitions = False
 mw.dictSettings = False
-db = dictdb.DictDB()
+mw.miDictDB = dictdb.DictDB()
 progressBar = False
 addon_path = dirname(__file__)
 currentNote = False 
@@ -79,25 +79,25 @@ def updateDs(lang, dirDs, dbDs, frequencyDict):
     notInDir = [item for item in dbDs if item not in dirDs]
     if len(notInDb) > 0:
         termHeader = getTermHeader(lang)
-        notInDb = db.addDicts(notInDb, lang, termHeader)
+        notInDb = mw.miDictDB.addDicts(notInDb, lang, termHeader)
         for current ,d in enumerate(notInDb):
             if current == len(notInDb) - 1:
                 getDictFiles(lang, d, frequencyDict, True)
             else:
                 getDictFiles(lang, d, frequencyDict)
     if len(notInDir) > 0:
-        lid = str(db.getLangId(lang))
+        lid = str(mw.miDictDB.getLangId(lang))
         progressWidget, bar, textL = getDeletionProgress()
         bar.setMaximum(len(notInDir))
         for idx, d in enumerate(notInDir):
             textL.setText('Currently removing the "' + d + '" dictionary for the "' + lang + '" language...')
             mw.app.processEvents() 
-            db.dropTables('l' + lid + 'name' + d)
-            db.deleteDict(d)
+            mw.miDictDB.dropTables('l' + lid + 'name' + d)
+            mw.miDictDB.deleteDict(d)
             bar.setValue(idx+1)
             mw.app.processEvents() 
-        db.commitChanges()
-        db.c.execute("VACUUM;")
+        mw.miDictDB.commitChanges()
+        mw.miDictDB.c.execute("VACUUM;")
         progressWidget.hide()
         miInfo('All dictionaries successfully removed. The database has been updated to reflect the current directory structure.')
 
@@ -158,7 +158,7 @@ def loadDict(files, lang, dictName, frequencyDict, miDict = False, last = False)
     howMany = len(files)
     count = 1
     progressBar, bar, txtD, fileC = getProgressWidgetDict();
-    tableName = 'l' + str(db.getLangId(lang)) + 'name' + dictName
+    tableName = 'l' + str(mw.miDictDB.getLangId(lang)) + 'name' + dictName
     jsonDict = []
     for file in files:
         jsonDictPath = join(addon_path, "user_files", "dictionaries" , lang, dictName, file)
@@ -185,12 +185,12 @@ def loadDict(files, lang, dictName, frequencyDict, miDict = False, last = False)
         if count % 5000 == 0:
             bar.setValue(count)
             mw.app.processEvents() 
-    db.importToDict(tableName, jsonDict)
+    mw.miDictDB.importToDict(tableName, jsonDict)
     bar.setValue(total)
     progressBar.hide()
     if last:
         miInfo('Your dictionaries for the "' + lang + '" language have been successfully imported.')     
-    db.commitChanges()
+    mw.miDictDB.commitChanges()
     return
 
 def getAdjustedTerm(term):
@@ -403,13 +403,13 @@ def updateLs(dirls, dbls):
     notInDb = [item for item in dirls if item not in dbls]
     notInDir = [item for item in dbls if item not in dirls]
     if len(notInDb) > 0:
-        db.addLanguages(notInDb)
+        mw.miDictDB.addLanguages(notInDb)
         for lang in notInDb:
             frequencyDict = getFrequencyList(lang)
             termHeader = getTermHeader(lang)
             dicts = getDirDicts(lang)
             if len(dicts) > 0:
-                dicts = db.addDicts(dicts, lang, termHeader)
+                dicts = mw.miDictDB.addDicts(dicts, lang, termHeader)
                 for current ,d in enumerate(dicts):
                     if current == len(dicts) - 1:
                         getDictFiles(lang, d, frequencyDict, True)
@@ -417,20 +417,17 @@ def updateLs(dirls, dbls):
                         getDictFiles(lang, d, frequencyDict)
     if len(notInDir) > 0:
         progressWidget, bar, textL = getDeletionProgress()
-        db.deleteLanguages(notInDir, progressWidget, bar, textL)
+        mw.miDictDB.deleteLanguages(notInDir, progressWidget, bar, textL)
         miInfo('The following languages have been successfully removed:<br><br>' + ','.join(notInDir))
     if len(inBoth) > 0:
         for lang in inBoth:
             frequencyDict = getFrequencyList(lang)
-            updateDs(lang, getDirDicts(lang), db.getDictsByLanguage(lang), frequencyDict)
+            updateDs(lang, getDirDicts(lang), mw.miDictDB.getDictsByLanguage(lang), frequencyDict)
 
 def checkForNewDictDir():
-    dbLangs = db.getCurrentDbLangs()
+    dbLangs = mw.miDictDB.getCurrentDbLangs()
     dirLangs = getDirLangs()
     updateLs(dirLangs, dbLangs)
-
-def dbTester():
-    text = db.createDB('testpoop')
 
 dictWidget  = False
 
@@ -687,8 +684,8 @@ def exportDefinitionsWidget(browser):
         dict3 = QComboBox()
         dictDict = {}
         tempdicts = []
-        for d in db.getAllDicts():
-            dictName = db.cleanDictName(d)
+        for d in mw.miDictDB.getAllDicts():
+            dictName = mw.miDictDB.cleanDictName(d)
             dictDict[dictName] = d;
             tempdicts.append(dictName)
         tempdicts.append('Google Images')
@@ -965,7 +962,7 @@ def exportDefinitions(og, dest, addType, dictNs, howMany, notes, generateWidget,
                 elif dictN == 'Forvo':
                     tresults.append(exportForvoAudio( term, howMany, lang))
                 elif dictN != 'None':
-                    dresults, dh, th = db.getDefForMassExp(term, dictN, str(howMany), rawNames[dCount])
+                    dresults, dh, th = mw.miDictDB.getDefForMassExp(term, dictN, str(howMany), rawNames[dCount])
                     tresults.append(formatDefinitions(dresults, th, dh, fb, bb))
                 dCount+= 1
             results = '<br><br>'.join([i for i in tresults if i != ''])      
@@ -1005,7 +1002,7 @@ def closeDictionary():
         mw.openMiDict.setText("Open Dictionary (Ctrl+W)")
 
 def checkInstalledDicts():
-    dicts = db.getAllDicts()
+    dicts = mw.miDictDB.getAllDicts()
     if len(dicts) == 0:
         miInfo('You currently have 0 dictionaries installed. For instructions on how to install dictionaries, and a link to open source dictionaries in the correct format, please refer to the user guide tab of the settings menu.')
 

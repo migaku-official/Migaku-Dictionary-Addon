@@ -491,7 +491,7 @@ hr{
         text = window.getSelection().toString();
     }
     if(text === "")return false;
-        return text.replace(/\n✂➠\n▲\n▼\n/g, '');
+        return text.replace(/\n✂➠\n▲\n▼\n/g, '\n');
     }
 
     function getTermDefText(el, clip = false){
@@ -1274,6 +1274,20 @@ function nightModeToggle(night){
     applyIcon(nightMode);
   }
 }
+
+
+function copyText(){
+    var copied = window.getSelectionText() 
+    if(copied) pycmd('clipped:' + copied.replace('&lt', '<').replace('&gt;', '>'));
+    }
+
+document.documentElement.addEventListener('keydown', function(e) {
+    if(e.keyCode === 67 && e.ctrlKey){
+        copyText();
+        e.preventDefault();
+    }
+    
+}, false)
 
     </script>
     <script id="initialValue"></script>

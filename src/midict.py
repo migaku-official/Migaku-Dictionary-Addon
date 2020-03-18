@@ -825,7 +825,7 @@ class DictInterface(QWidget):
         self.config = self.getConfig()
         self.defaultGroups = self.db.getDefaultGroups()
         self.userGroups = self.getUserGroups()
-        self.searchOptions = ['Forward', 'Backward', 'Exact', 'Definition', 'Example', 'Pronunciation']
+        self.searchOptions = ['Forward', 'Backward', 'Exact', 'Anywhere', 'Definition', 'Example', 'Pronunciation']
         self.setWindowTitle("Dictionary")
         self.dictGroups = self.setupDictGroups()
         self.nightModeToggler = self.setupNightModeToggle()

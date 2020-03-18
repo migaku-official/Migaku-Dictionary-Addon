@@ -5,4 +5,4 @@
 # This is a beta prototype release
 #  Yoga MIA
 
-from . import  main
+from . import  main, miUpdater

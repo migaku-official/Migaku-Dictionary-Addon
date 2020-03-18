@@ -17,7 +17,6 @@ from os.path import dirname, join
 import platform
 from .addDictGroup import DictGroupEditor
 from .addTemplate import TemplateEditor
-from . import dictdb
 from .miutils import miInfo, miAsk
 
 
@@ -61,7 +60,6 @@ class SettingsGui(QTabWidget):
         self.exportTemplates = self.getGroupTemplateTable()
         self.tooltipCB = QCheckBox()
         self.tooltipCB.setFixedHeight(30)
-        self.db = dictdb.DictDB()
         self.maxImgWidth = QSpinBox()
         self.maxImgWidth.setRange(0, 9999)
         self.maxImgHeight = QSpinBox()
@@ -327,7 +325,7 @@ class SettingsGui(QTabWidget):
             self.templateEditor.activateWindow()
 
     def getDictionaryNames(self):
-        dictList = self.db.getAllDictsWithLang()
+        dictList = self.mw.miDictDB.getAllDictsWithLang()
         dictionaryList = []
         for dictionary in dictList:
             dictName = self.cleanDictName(dictionary['dict'])

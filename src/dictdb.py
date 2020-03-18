@@ -30,6 +30,10 @@ class DictDB:
         self.c.close()
         self.c = self.oldConnection
 
+    def closeConnection(self):
+        self.c.close()
+        self = False
+
     def getLangId(self, lang):
         self.c.execute('SELECT id FROM langnames WHERE langname = ?;',  (lang,))
         try:
@@ -202,6 +206,8 @@ class DictDB:
                terms[idx] = terms[idx] + '%';
             elif sT ==  'Backward':
                 terms[idx] = '%_' + terms[idx]
+            elif sT ==  'Anywhere':
+                terms[idx] = '%' + terms[idx] + '%'
             elif sT ==  'Exact':
                 terms[idx] = terms[idx]
             elif sT ==  'Definition':
@@ -271,7 +277,7 @@ class DictDB:
                 else:
                     terms = self.applySearchType(terms, sT)
                     alreadyConjTyped[term] = terms
-            
+
             toQuery = self.getQueryCriteria(column, terms, op)  
             termTuple = tuple(terms)  
             allRs = self.executeSearch(dic['dict'], toQuery, dictLimit, termTuple)
