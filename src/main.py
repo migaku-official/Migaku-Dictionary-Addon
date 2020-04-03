@@ -1128,7 +1128,7 @@ EditCurrent.mousePressEvent = addEditActivated
 def miLinks(self, cmd):
     if mw.miaDictionary and mw.miaDictionary.isVisible():
         mw.miaDictionary.dict.setReviewer(self)
-    ogLinks(self, cmd)
+    return ogLinks(self, cmd)
 
 ogLinks = Reviewer._linkHandler
 Reviewer._linkHandler = miLinks
