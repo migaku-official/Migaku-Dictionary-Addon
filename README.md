@@ -26,7 +26,7 @@
 
 ### Installation
 
-1. Make sure you have the [latest version](https://apps.ankiweb.net/#download) of Anki 2.1 installed.
+1. Make sure you have the Anki version for the current MIA Development Cycle installed.
 2. Download the latest version of the addon from [AnkiWeb](https://ankiweb.net/shared/info/1655992655)
 
 ### Documentation
