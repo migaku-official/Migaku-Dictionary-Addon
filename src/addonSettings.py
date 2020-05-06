@@ -20,6 +20,8 @@ from .addTemplate import TemplateEditor
 from .miutils import miInfo, miAsk
 
 
+verNumber = "1.1.01"
+
 def attemptOpenLink(cmd):
     if cmd.startswith('openLink:'):
         openLink(cmd[9:])
@@ -51,7 +53,7 @@ class SettingsGui(QTabWidget):
         self.forvoLanguages = ["Afrikaans", "Ancient Greek", "Arabic", "Armenian", "Azerbaijani", "Bashkir", "Basque", "Belarusian", "Bengali", "Bulgarian", "Cantonese", "Catalan", "Chuvash", "Croatian", "Czech", "Danish", "Dutch", "English", "Esperanto", "Estonian", "Finnish", "French", "Galician","German", "Greek", "Hakka", "Hebrew", "Hindi", "Hungarian", "Icelandic", "Indonesian", "Interlingua", "Irish", "Italian", "Japanese", "Kabardian", "Korean", "Kurdish", "Latin", "Latvian", "Lithuanian", "Low German", "Luxembourgish", "Mandarin Chinese", "Mari", "Min Nan", "Northern Sami", "Norwegian Bokmål", "Persian", "Polish", "Portuguese", "Punjabi", "Romanian", "Russian", "Serbian", "Slovak", "Slovenian", "Spanish", "Swedish", "Tagalog", "Tatar", "Thai", "Turkish", "Ukrainian", "Urdu", "Uyghur", "Venetian", "Vietnamese", "Welsh", "Wu Chinese", "Yiddish"]
         self.setMinimumSize(850, 550)
         self.setContextMenuPolicy(Qt.NoContextMenu)
-        self.setWindowTitle("Dictionary Settings")
+        self.setWindowTitle("Dictionary Settings (Ver. " + verNumber + ")")
         self.addonPath = path
         self.setWindowIcon(QIcon(join(self.addonPath, 'icons', 'mia.png')))
         self.addDictGroup = QPushButton('Add Dictionary Group')
