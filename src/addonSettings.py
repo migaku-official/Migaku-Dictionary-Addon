@@ -101,7 +101,7 @@ class SettingsGui(QTabWidget):
         self.loadConfig()
         self.initTooltips()
         self.hotkeyEsc = QShortcut(QKeySequence("Esc"), self)
-        self.hotkeyEsc.activated.connect(self.hide)
+        self.hotkeyEsc.activated.connect(self.close)
         self.resize(920, 550)
         self.show()
 
@@ -335,7 +335,7 @@ class SettingsGui(QTabWidget):
         self.addDictGroup.clicked.connect(self.addGroup)
         self.addExportTemplate.clicked.connect(self.addTemplate)
         self.restoreButton.clicked.connect(self.restoreDefaults)
-        self.cancelButton.clicked.connect(self.hide)
+        self.cancelButton.clicked.connect(self.close)
         self.applyButton.clicked.connect(self.saveConfig)
 
     def restoreDefaults(self):
