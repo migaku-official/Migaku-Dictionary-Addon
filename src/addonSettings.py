@@ -136,9 +136,6 @@ class SettingsGui(QTabWidget):
         self.highlightSentence.setToolTip('The dictionary will highlight example sentences in\nthe search results. This feature is experimental and currently only\nfunctions on Japanese monolingual dictionaries.')
         self.openOnStart.setToolTip('Enable/Disable launching the MIA Dictionary on profile load.')
         linNote = ''
-        if isLin:
-            linNote =  '\nAs of Anki 2.1.17, changes in Anki\'s source code do not allow for global hotkey functionality on Linux.\nWe are in contact with the Anki developers and they have promised to expose the necessary library in the next build.'
-            self.globalHotkeys.setEnabled(False)
         self.globalHotkeys.setToolTip('Enable/Disable global hotkeys.' + linNote)
         self.globalOpen.setToolTip('If enabled the dictionary will be opened on a global search.')
 

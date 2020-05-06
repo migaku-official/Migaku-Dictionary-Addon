@@ -611,7 +611,7 @@ def initGlobalHotkeys():
     mw.hkThread.release.connect(releaseKey)
     mw.hkThread.run()
 
-if mw.addonManager.getConfig(__name__)['globalHotkeys'] and not isLin:
+if mw.addonManager.getConfig(__name__)['globalHotkeys']:
     initGlobalHotkeys()
 
 mw.hotkeyW = QShortcut(QKeySequence("Ctrl+W"), mw)
