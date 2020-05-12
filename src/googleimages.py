@@ -308,7 +308,7 @@ class Google(QThread):
 
 
     def getResultsFromRawHtml(self, html):
-        pattern = r"AF_initDataCallback[\s\S]+AF_initDataCallback\({key: '[\s\S]+?',[\s\S]+?return (\[[\s\S]+\])[\s\S]+?<\/body><\/html>"
+        pattern = r"AF_initDataCallback[\s\S]+AF_initDataCallback\({key: '[\s\S]+?',[\s\S]+?return (\[[\s\S]+\])[\s\S]+?<\/script><script id="
         matches = re.findall(pattern, html)
         results = []
         try:
