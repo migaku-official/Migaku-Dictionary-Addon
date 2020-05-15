@@ -18,7 +18,7 @@
 
 ### Table of Contents
 
-- [Tutorial](https://massimmersionapproach.com)
+- [Tutorial](https://massimmersionapproach.com/table-of-contents/anki/mia-dictionary)
 - [Installation](#installation)
 - [Documentation](#documentation)
 - [Contributing](#contributing)
