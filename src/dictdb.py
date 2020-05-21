@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 
-import sys
 import sqlite3
 import os.path
 from aqt.utils import showInfo
@@ -9,7 +8,6 @@ import re
 import json
 addon_path = os.path.dirname(__file__)
 from aqt import mw
-
 
 class DictDB:
     conn = None
@@ -219,35 +217,21 @@ class DictDB:
         return terms;
 
     def deconjugate(self, term, conjugations):
-        deconjugations = [term]
-
-
-        # keep running deconjugation loop, until no more conjugations found.
-        
-        new_length = len(deconjugations)
-        old_length = -1
-        while new_length > old_length:
-            old_length = new_length
-            for term in deconjugations: # local assignment term here is probably dodgy
-                for c in conjugations:
-                    if term.endswith(c['inflected']): 
-                        for x in c['dict']:
-                            deinflected = self.rreplace(term, c['inflected'], x, 1)
-                            if 'prefix' in c:
-                                prefix = c['prefix']
-                                if deinflected.startswith(prefix):
-                                    deprefixedDeinflected =  deinflected[len(prefix):]
-                                    if deprefixedDeinflected not in deconjugations:
-                                        deconjugations.append(deprefixedDeinflected)
-                            if deinflected not in deconjugations:
-                                deconjugations.append(deinflected)
-                     
-            new_length = len(deconjugations)
-        
+        deconjugations = []
+        for c in conjugations:
+            if term.endswith(c['inflected']): 
+                for x in c['dict']:
+                    deinflected = self.rreplace(term, c['inflected'], x, 1)
+                    if 'prefix' in c:
+                        prefix = c['prefix']
+                        if deinflected.startswith(prefix):
+                            deprefixedDeinflected =  deinflected[len(prefix):]
+                            if deprefixedDeinflected not in deconjugations:
+                                deconjugations.append(deprefixedDeinflected)
+                    if deinflected not in deconjugations:
+                        deconjugations.append(deinflected)
         deconjugations = list(filter(lambda x: len(x) > 1, deconjugations))  
-
-        ### I will comment next line out, because I instantiate deconjugations with the term instead.
-        #deconjugations.insert(0, term)    
+        deconjugations.insert(0, term)    
         return deconjugations
 
     def rreplace(self, s, old, new, occurrence):
