@@ -1,25 +1,21 @@
 # -*- coding: utf-8 -*-
-# 
-from os.path import dirname, join, basename, exists, join
-import sys, os, platform, re, subprocess, aqt.utils
-from anki.utils import stripHTML, isWin, isMac, isLin
-from . import Pyperclip 
-from .midict import DictInterface, ClipThread
-import re
-import unicodedata
-import urllib.parse
-from shutil import copyfile
-from anki.hooks import addHook, wrap, runHook, runFilter
-from aqt.utils import shortcut, saveGeom, saveSplitter, showInfo, askUser
+#
+import time
+import os, re, aqt.utils
 import aqt.editor
 import json
+import codecs
+from os.path import dirname, join
+from anki.utils import isWin, isMac, isLin
+from .midict import DictInterface, ClipThread
+from anki.hooks import addHook, wrap
+from aqt.utils import showInfo
 from aqt import mw
 from aqt.qt import *
 from . import dictdb
 from aqt.webview import AnkiWebView
 from .miutils import miInfo, miAsk
 from .addonSettings import SettingsGui
-import codecs
 from operator import itemgetter
 from aqt.addcards import AddCards
 from aqt.editcurrent import EditCurrent
@@ -29,9 +25,6 @@ from aqt.reviewer import Reviewer
 from . import googleimages
 from .forvodl import Forvo
 from urllib.request import Request, urlopen
-import requests
-import time
-import os
 
 
 mw.MIADictConfig = mw.addonManager.getConfig(__name__)
@@ -445,46 +438,72 @@ def captureKey(keyList):
     if char not in mw.currentlyPressed:
             mw.currentlyPressed.append(char)
     if isWin:
-        if 'Key.ctrl_l' in mw.currentlyPressed and "'c'" in mw.currentlyPressed and'Key.space'  in mw.currentlyPressed:
+        searchKeys = ('Key.ctrl_l', "'c'", 'Key.space')
+        sentenceExpKeys = ('Key.ctrl_l', "'c'", 'Key.alt_l')
+        addCardKeys = ('Key.ctrl_l', 'Key.enter')
+        imgExpKeys = ('Key.ctrl_l', 'Key.shift', "'v'")
+
+        if all(key in mw.currentlyPressed for key in searchKeys):
             mw.hkThread.handleSystemSearch()
             mw.currentlyPressed = []
-        elif 'Key.ctrl_l' in mw.currentlyPressed and "'c'" in mw.currentlyPressed and 'Key.alt_l' in mw.currentlyPressed:
+        elif all(key in mw.currentlyPressed for key in sentenceExpKeys):
             mw.hkThread.handleSentenceExport()
             mw.currentlyPressed = []
-        elif 'Key.ctrl_l' in mw.currentlyPressed and 'Key.enter' in mw.currentlyPressed:
+        elif all(key in mw.currentlyPressed for key in addCardKeys):
             mw.hkThread.attemptAddCard()
             mw.currentlyPressed = []
-        elif 'Key.ctrl_l' in mw.currentlyPressed and 'Key.shift' in mw.currentlyPressed and "'v'" in mw.currentlyPressed:
-            mw.hkThread.handleImageExport()
-            mw.currentlyPressed = []
-    elif isLin:
-        if 'Key.ctrl' in mw.currentlyPressed and "'c'" in mw.currentlyPressed and'Key.space'  in mw.currentlyPressed:
-            mw.hkThread.handleSystemSearch()
-            mw.currentlyPressed = []
-        elif 'Key.ctrl' in mw.currentlyPressed and "'c'" in mw.currentlyPressed and 'Key.alt' in mw.currentlyPressed:
-            mw.hkThread.handleSentenceExport()
-            mw.currentlyPressed = []
-        elif 'Key.ctrl' in mw.currentlyPressed and 'Key.enter' in mw.currentlyPressed:
-            mw.hkThread.attemptAddCard()
-            mw.currentlyPressed = []
-        elif 'Key.ctrl' in mw.currentlyPressed and 'Key.shift' in mw.currentlyPressed and "'v'" in mw.currentlyPressed:
-            mw.hkThread.handleImageExport()
-            mw.currentlyPressed = []
-    else:
-        if ('Key.cmd' in mw.currentlyPressed or 'Key.cmd_r' in mw.currentlyPressed)  and "'c'" in mw.currentlyPressed and "'b'"  in mw.currentlyPressed:
-            mw.hkThread.handleSystemSearch()
-            mw.currentlyPressed = []
-        elif ('Key.cmd' in mw.currentlyPressed or 'Key.cmd_r' in mw.currentlyPressed) and "'c'" in mw.currentlyPressed and 'Key.ctrl' in mw.currentlyPressed:
-            mw.hkThread.handleSentenceExport()
-            mw.currentlyPressed = []
-        elif ('Key.cmd' in mw.currentlyPressed or 'Key.cmd_r' in mw.currentlyPressed) and 'Key.enter' in mw.currentlyPressed:
-            mw.hkThread.attemptAddCard()
-            mw.currentlyPressed = []
-        elif ('Key.cmd' in mw.currentlyPressed or 'Key.cmd_r' in mw.currentlyPressed) and 'Key.shift' in mw.currentlyPressed and "'v'" in mw.currentlyPressed:
+        elif all(key in mw.currentlyPressed for key in imgExpKeys):
             mw.hkThread.handleImageExport()
             mw.currentlyPressed = []
 
-   
+    elif isLin:
+        searchKeys = ('Key.ctrl', "'c'", 'Key.space')
+        sentenceExpKeys = ('Key.ctrl', "'c'", 'Key.alt')
+        addCardKeys = ('Key.ctrl', 'Key.enter')
+        imgExpKeys = ('Key.ctrl', 'Key.shift', "'V'")
+        altimgExpKeys = ('Key.ctrl', 'Key.shift', "'v'")
+
+        if all(key in mw.currentlyPressed for key in searchKeys):
+            mw.hkThread.handleSystemSearch()
+            mw.currentlyPressed = []
+        elif all(key in mw.currentlyPressed for key in sentenceExpKeys):
+            mw.hkThread.handleSentenceExport()
+            mw.currentlyPressed = []
+        elif all(key in mw.currentlyPressed for key in addCardKeys):
+            mw.hkThread.attemptAddCard()
+            mw.currentlyPressed = []
+        elif all(key in mw.currentlyPressed for key in imgExpKeys) or\
+                all(key in mw.currentlyPressed for key in altimgExpKeys):
+            mw.hkThread.handleImageExport()
+            mw.currentlyPressed = []
+    else:
+        searchKeys = ('Key.cmd', "'c'", "'b'")
+        altsearchKeys = ('Key.cmd_r', "'c'", "'b'")
+        sentenceExpKeys = ('Key.cmd', "'c'", 'Key.ctrl')
+        altsentenceExpKeys = ('Key.cmd_r', "'c'", 'Key.ctrl')
+        addCardKeys = ('Key.cmd', 'Key.enter')
+        altaddCardKeys = ('Key.cmd_r', 'Key.enter')
+        imgExpKeys = ('Key.cmd', 'Key.shift', "'v'")
+        altimgExpKeys = ('Key.cmd_r', 'Key.shift', "'v'")
+
+        if all(key in mw.currentlyPressed for key in searchKeys) or\
+        all(key in mw.currentlyPressed for key in altsentenceExpKeys):
+            mw.hkThread.handleSystemSearch()
+            mw.currentlyPressed = []
+        elif all(key in mw.currentlyPressed for key in sentenceExpKeys) or\
+                all(key in mw.currentlyPressed for key in altsentenceExpKeys):
+            mw.hkThread.handleSentenceExport()
+            mw.currentlyPressed = []
+        elif all(key in mw.currentlyPressed for key in addCardKeys) or\
+                all(key in mw.currentlyPressed for key in altaddCardKeys):
+            mw.hkThread.attemptAddCard()
+            mw.currentlyPressed = []
+        elif all(key in mw.currentlyPressed for key in imgExpKeys) or\
+                all(key in mw.currentlyPressed for key in altimgExpKeys):
+            mw.hkThread.handleImageExport()
+            mw.currentlyPressed = []
+
+
 def releaseKey(keyList):
     key = keyList[0]
     try:
