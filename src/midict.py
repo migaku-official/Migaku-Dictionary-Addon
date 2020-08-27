@@ -12,6 +12,8 @@ from aqt.utils import ensureWidgetInScreenBoundaries
 from aqt.qt import *
 from anki.utils import isMac, isWin, isLin
 from aqt.webview import AnkiWebView
+from aqt.editor import pics as supportedImg
+from aqt.editor import audio as supportedAudio
 from shutil import copyfile
 from . import Pyperclip
 from os.path import join, exists, dirname
@@ -723,13 +725,6 @@ class ClipThread(QObject):
             clip = self.mw.app.clipboard().text()
             ext = clip.split('.')[-1]
 
-            supported_audio = {"wav", "mp3", "ogg", "flac", "mp4", "swf",
-                               "mov", "mpeg", "mkv", "m4a", "3gp", "spx",
-                               "oga", "webm", "mpg", "ogx", "avi", "flv",
-                               "ogv"}
-            supported_img = {"jpg", "jpeg", "png", "tif", "tiff", "gif", "svg",
-                             "webp"}
-
             if mime.hasImage():
                 image = mime.imageData()
                 filename = str(time.time()) + '.png'
@@ -738,8 +733,8 @@ class ClipThread(QObject):
                 maxH = self.config['maxHeight']
                 image = image.scaled(QSize(maxW, maxH), Qt.KeepAspectRatio, Qt.SmoothTransformation)
                 image.save(fullpath)
-                self.image.emit([fullpath, filename]) 
-            elif ext in supported_audio|supported_img:
+                self.image.emit([fullpath, filename])
+            elif (ext in supportedAudio or ext in supportedImg):
                 try:
                     if isMac:
                         clip = str(self.mw.app.clipboard().mimeData().urls()[0].url())
@@ -749,10 +744,10 @@ class ClipThread(QObject):
                     else:
                         path = clip.replace('file:///', '', 1)
                     temp, filename = self.moveAudioToTempFolder(path, ext)
-                    if filename and ext in supported_audio:
+                    if filename and ext in supportedAudio:
                         self.image.emit([temp, '[sound:' + filename + ']',
                                          filename]) 
-                    elif filename and ext in supported_img:
+                    elif filename and ext in supportedImg:
                         self.image.emit([temp, filename]) 
                 except:
                     return
