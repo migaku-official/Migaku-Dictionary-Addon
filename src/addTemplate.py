@@ -51,7 +51,7 @@ class TemplateEditor(QWidget):
         self.wordField.setToolTip('The destination field for your target word.')
         self.sentenceField.setToolTip('The destination field for the sentence.')
         self.imageField.setToolTip('The destination field for an image pasted from\nthe clipboard with Ctrl/⌘+shift+v.')
-        self.audioField.setToolTip('The destination field for an mp3 audio file pasted from\nthe clipboard with Ctrl/⌘+shift+v.')
+        self.audioField.setToolTip('The destination field for an audio file pasted from\nthe clipboard with Ctrl/⌘+shift+v.')
         self.otherDictsField.setToolTip('The destination field for any dictionary\nwithout a specific destination field set below.')
         self.dictionaries.setToolTip('The dictionary to specify a particular field to.\nThe dictionaries will be prioritized and exported before\ndictionaries without a specified destination field.')
         self.fields.setToolTip('The dictionary\'s destination field.')

@@ -1,38 +1,32 @@
 # -*- coding: utf-8 -*-
-# 
+#
 
-from aqt.utils import shortcut, saveGeom, saveSplitter, showInfo, askUser, ensureWidgetInScreenBoundaries
 import json
 import sys
-import math
-from anki.hooks import runHook
-from aqt.qt import *
-from aqt.utils import openLink, tooltip
-from anki.utils import isMac, isWin, isLin
-from anki.lang import _
-from aqt.webview import AnkiWebView
 import re
-from shutil import copyfile
-from . import Pyperclip 
-import os, shutil
-from os.path import join, exists, dirname
-from .history import HistoryBrowser, HistoryModel
-from aqt.editor import Editor
-from .cardExporter import CardExporter
 import time
-from . import dictdb
-import aqt
-from .miJapaneseHandler import miJHandler
-from urllib.request import Request, urlopen
-import requests
-import urllib.request
-from . import googleimages
-from .addonSettings import SettingsGui
+import os
 import datetime
 import codecs
+from aqt.utils import ensureWidgetInScreenBoundaries
+from aqt.qt import *
+from anki.utils import isMac, isWin, isLin
+from aqt.webview import AnkiWebView
+from aqt.editor import pics as supportedImg
+from aqt.editor import audio as supportedAudio
+from shutil import copyfile
+from . import Pyperclip
+from os.path import join, exists, dirname
+from .history import HistoryBrowser, HistoryModel
+from .cardExporter import CardExporter
+from . import dictdb
+from .miJapaneseHandler import miJHandler
+from urllib.request import Request, urlopen
+from . import googleimages
+from .addonSettings import SettingsGui
 from .forvodl import Forvo
-import ntpath
 from .miutils import miInfo
+
 
 class MIDict(AnkiWebView):
 
@@ -729,8 +723,9 @@ class ClipThread(QObject):
         if self.checkDict():
             mime = self.mw.app.clipboard().mimeData()
             clip = self.mw.app.clipboard().text()
-            
-            if not clip.endswith('.mp3') and mime.hasImage():
+            ext = clip.split('.')[-1]
+
+            if mime.hasImage():
                 image = mime.imageData()
                 filename = str(time.time()) + '.png'
                 fullpath = join(self.addonPath, 'temp', filename)
@@ -738,30 +733,29 @@ class ClipThread(QObject):
                 maxH = self.config['maxHeight']
                 image = image.scaled(QSize(maxW, maxH), Qt.KeepAspectRatio, Qt.SmoothTransformation)
                 image.save(fullpath)
-                self.image.emit([fullpath, filename]) 
-            elif clip.endswith('.mp3'):
-                if not isLin:
+                self.image.emit([fullpath, filename])
+            elif (ext in supportedAudio or ext in supportedImg):
+                try:
                     if isMac:
-                        try:
-                            clip = str(self.mw.app.clipboard().mimeData().urls()[0].url())
-                        except:
-                            return
-                    if clip.startswith('file:///') and clip.endswith('.mp3'):
-                        try:
-                            if isMac:
-                                path = clip.replace('file://', '', 1)
-                            else:
-                                path = clip.replace('file:///', '', 1)
-                            temp, mp3 = self.moveAudioToTempFolder(path)
-                            if mp3:
-                                self.image.emit([temp, '[sound:' + mp3 + ']', mp3]) 
-                        except:
-                            return
+                        clip = str(self.mw.app.clipboard().mimeData().urls()[0].url())
+                        path = clip.replace('file://', '', 1)
+                    elif isLin:
+                        path = clip.replace('file://', '', 1)
+                    else:
+                        path = clip.replace('file:///', '', 1)
+                    temp, filename = self.moveAudioToTempFolder(path, ext)
+                    if filename and ext in supportedAudio:
+                        self.image.emit([temp, '[sound:' + filename + ']',
+                                         filename]) 
+                    elif filename and ext in supportedImg:
+                        self.image.emit([temp, filename]) 
+                except:
+                    return
                     
-    def moveAudioToTempFolder(self, path):
+    def moveAudioToTempFolder(self, path, extension='mp3'):
         try:
             if exists(path): 
-                filename = str(time.time()).replace('.', '') + '.mp3'
+                filename = str(time.time()).replace('.', '') + '.%s' % extension
                 destpath = join(self.addonPath, 'temp', filename)
                 if not exists(destpath): 
                     copyfile(path, destpath)
