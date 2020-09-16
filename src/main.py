@@ -33,9 +33,8 @@ import requests
 import time
 import os
 
-
-mw.MIADictConfig = mw.addonManager.getConfig(__name__)
-mw.MIAExportingDefinitions = False
+mw.MigakuDictConfig = mw.addonManager.getConfig(__name__)
+mw.MigakuExportingDefinitions = False
 mw.dictSettings = False
 mw.miDictDB = dictdb.DictDB()
 progressBar = False
@@ -48,10 +47,16 @@ tmpdir = join(addon_path, 'temp')
 
 
 
-def refreshMIADictConfig():
-    mw.MIADictConfig = mw.addonManager.getConfig(__name__)
 
-mw.refreshMIADictConfig = refreshMIADictConfig
+
+
+
+
+
+def refreshMigakuDictConfig():
+    mw.MigakuDictConfig = mw.addonManager.getConfig(__name__)
+
+mw.refreshMigakuDictConfig = refreshMigakuDictConfig
 
 def removeTempFiles():
     filelist = [ f for f in os.listdir(tmpdir)]
@@ -60,8 +65,8 @@ def removeTempFiles():
 
 removeTempFiles()
 
-def mia(text):
-    showInfo(text ,False,"", "info", "MIA Dictionary Add-on")
+def migaku(text):
+    showInfo(text ,False,"", "info", "Migaku Dictionary Add-on")
 
 def showA(ar):
     showInfo(json.dumps(ar, ensure_ascii=False))
@@ -110,7 +115,7 @@ def natural_sort(l):
 def getDeletionProgress():
     progressWidget = QWidget(None)
     textDisplay = QLabel()
-    progressWidget.setWindowIcon(QIcon(join(addon_path, 'icons', 'mia.png')))
+    progressWidget.setWindowIcon(QIcon(join(addon_path, 'icons', 'migaku.png')))
     progressWidget.setWindowTitle("Removing Dictionaries Not Found in Directory...")
     textDisplay.setText("Removing... ")
     progressWidget.setFixedSize(500, 100)
@@ -131,11 +136,11 @@ def getProgressWidgetDict(freq = False):
     progressWidget = QWidget(None)
     textDisplay = QLabel()
     fileCounter = QLabel() 
-    progressWidget.setWindowIcon(QIcon(join(addon_path, 'icons', 'mia.png')))
+    progressWidget.setWindowIcon(QIcon(join(addon_path, 'icons', 'migaku.png')))
     if freq:
         progressWidget.setWindowTitle("Applying Frequency Data to Dictionary...")
     else:
-        progressWidget.setWindowTitle("Dictionary Add-on, Installing Dictionaries...")
+        progressWidget.setWindowTitle("Migaku Dictionary Add-on, Installing Dictionaries...")
     textDisplay.setText("Importing... ")
     fileCounter.setText("File...")
     progressWidget.setFixedSize(500, 100)
@@ -494,28 +499,28 @@ def releaseKey(keyList):
     
 
 def exportSentence(sentence):
-    if mw.miaDictionary and mw.miaDictionary.isVisible():
-        mw.miaDictionary.dict.exportSentence(sentence)
+    if mw.migakuDictionary and mw.migakuDictionary.isVisible():
+        mw.migakuDictionary.dict.exportSentence(sentence)
 
 def exportImage(img):
-    if mw.miaDictionary and mw.miaDictionary.isVisible():
+    if mw.migakuDictionary and mw.migakuDictionary.isVisible():
         if img[1].startswith('[sound:'):
-            mw.miaDictionary.dict.exportAudio(img)
+            mw.migakuDictionary.dict.exportAudio(img)
         else:
-            mw.miaDictionary.dict.exportImage(img)
+            mw.migakuDictionary.dict.exportImage(img)
 
 def trySearch(term):
-    if mw.miaDictionary and mw.miaDictionary.isVisible():
-        mw.miaDictionary.initSearch(term)
-    elif mw.MIADictConfig['openOnGlobal']:
+    if mw.migakuDictionary and mw.migakuDictionary.isVisible():
+        mw.migakuDictionary.initSearch(term)
+    elif mw.MigakuDictConfig['openOnGlobal']:
         mw.dictionaryInit(term)
 
 
 
 def attemptAddCard(add):
-    if mw.miaDictionary and mw.miaDictionary.isVisible() and mw.miaDictionary.dict.addWindow and mw.miaDictionary.dict.addWindow.window.isVisible():
+    if mw.migakuDictionary and mw.migakuDictionary.isVisible() and mw.migakuDictionary.dict.addWindow and mw.migakuDictionary.dict.addWindow.window.isVisible():
         time.sleep(.3)
-        mw.miaDictionary.dict.addWindow.addCard()
+        mw.migakuDictionary.dict.addWindow.addCard()
 
 
 def openDictionarySettings():
@@ -542,7 +547,7 @@ def getMacWelcomeScreen():
     return file
 
 if isMac:
-    welcomeScreen =  getMacWelcomeScreen()
+    welcomeScreen = getMacWelcomeScreen()
 else:
     welcomeScreen = getWelcomeScreen()
 
@@ -551,54 +556,54 @@ def dictionaryInit(term = False):
     shortcut = '(Ctrl+W)'
     if isMac:
         shortcut = '⌘W'
-    if not mw.miaDictionary:
-        mw.miaDictionary = DictInterface(mw, addon_path, welcomeScreen, term = term)
+    if not mw.migakuDictionary:
+        mw.migakuDictionary = DictInterface(mw, addon_path, welcomeScreen, term = term)
         mw.openMiDict.setText("Close Dictionary " + shortcut)
-    elif mw.miaDictionary and mw.miaDictionary.isVisible():
-        mw.miaDictionary.saveSizeAndPos()
-        mw.miaDictionary.hide()
+    elif mw.migakuDictionary and mw.migakuDictionary.isVisible():
+        mw.migakuDictionary.saveSizeAndPos()
+        mw.migakuDictionary.hide()
         mw.openMiDict.setText("Open Dictionary "+ shortcut)
     else:
-        mw.miaDictionary.dict.close()
-        mw.miaDictionary.dict.deleteLater()
-        mw.miaDictionary.deleteLater()
-        mw.miaDictionary = DictInterface(mw, addon_path, welcomeScreen, term = term)
+        mw.migakuDictionary.dict.close()
+        mw.migakuDictionary.dict.deleteLater()
+        mw.migakuDictionary.deleteLater()
+        mw.migakuDictionary = DictInterface(mw, addon_path, welcomeScreen, term = term)
         mw.openMiDict.setText("Close Dictionary "+ shortcut)
 
 mw.dictionaryInit = dictionaryInit
 
 def setupGuiMenu():
     addMenu = False
-    if not hasattr(mw, 'MIAMainMenu'):
-        mw.MIAMainMenu = QMenu('MIA',  mw)
+    if not hasattr(mw, 'MigakuMainMenu'):
+        mw.MigakuMainMenu = QMenu('Migaku',  mw)
         addMenu = True
-    if not hasattr(mw, 'MIAMenuSettings'):
-        mw.MIAMenuSettings = []
-    if not hasattr(mw, 'MIAMenuActions'):
-        mw.MIAMenuActions = []
+    if not hasattr(mw, 'MigakuMenuSettings'):
+        mw.MigakuMenuSettings = []
+    if not hasattr(mw, 'MigakuMenuActions'):
+        mw.MigakuMenuActions = []
 
     setting = QAction("Dictionary Settings", mw)
     setting.triggered.connect(openDictionarySettings)
-    mw.MIAMenuSettings.append(setting)
+    mw.MigakuMenuSettings.append(setting)
 
     mw.openMiDict = QAction("Open Dictionary (Ctrl+W)", mw)
     mw.openMiDict.triggered.connect(dictionaryInit)
-    mw.MIAMenuActions.append(mw.openMiDict)
+    mw.MigakuMenuActions.append(mw.openMiDict)
 
-    mw.MIAMainMenu.clear()
-    for act in mw.MIAMenuSettings:
-        mw.MIAMainMenu.addAction(act)
-    mw.MIAMainMenu.addSeparator()
-    for act in mw.MIAMenuActions:
-        mw.MIAMainMenu.addAction(act)
+    mw.MigakuMainMenu.clear()
+    for act in mw.MigakuMenuSettings:
+        mw.MigakuMainMenu.addAction(act)
+    mw.MigakuMainMenu.addSeparator()
+    for act in mw.MigakuMenuActions:
+        mw.MigakuMainMenu.addAction(act)
 
     if addMenu:
-        mw.form.menubar.insertMenu(mw.form.menuHelp.menuAction(), mw.MIAMainMenu)  
+        mw.form.menubar.insertMenu(mw.form.menuHelp.menuAction(), mw.MigakuMainMenu)  
 
 setupGuiMenu()
 
 
-mw.miaDictionary = False
+mw.migakuDictionary = False
 
 
 def initGlobalHotkeys():
@@ -630,16 +635,16 @@ def searchTerm(self):
     if text:
         text = re.sub(r'\[[^\]]+?\]', '', text)
         text = text.strip()
-        if not mw.miaDictionary or not mw.miaDictionary.isVisible():
+        if not mw.migakuDictionary or not mw.migakuDictionary.isVisible():
             dictionaryInit(text)
-        mw.miaDictionary.ensureVisible()
-        mw.miaDictionary.initSearch(text)
+        mw.migakuDictionary.ensureVisible()
+        mw.migakuDictionary.initSearch(text)
         if self.title == 'main webview':
             if mw.state == 'review':
-                mw.miaDictionary.dict.setReviewer(mw.reviewer)
+                mw.migakuDictionary.dict.setReviewer(mw.reviewer)
         elif self.title == 'editor':
             target = getTarget(type(self.parentEditor.parentWindow).__name__)
-            mw.miaDictionary.dict.setCurrentEditor(self.parentEditor, target)
+            mw.migakuDictionary.dict.setCurrentEditor(self.parentEditor, target)
 
 
 
@@ -744,8 +749,8 @@ def exportDefinitionsWidget(browser):
         layout.addWidget(ex)
         layout.setContentsMargins(10,6, 10, 6)
         generateWidget.setWindowFlags(generateWidget.windowFlags() | Qt.MSWindowsFixedSizeDialogHint)
-        generateWidget.setWindowTitle("Dictionary: Export Definitions")
-        generateWidget.setWindowIcon(QIcon(join(addon_path, 'icons', 'mia.png')))
+        generateWidget.setWindowTitle("Migaku Dictionary: Export Definitions")
+        generateWidget.setWindowIcon(QIcon(join(addon_path, 'icons', 'migaku.png')))
         generateWidget.setLayout(layout)
         generateWidget.exec_()
     else:
@@ -755,7 +760,7 @@ def getProgressWidgetDefs():
     progressWidget = QWidget(None)
     layout = QVBoxLayout()
     progressWidget.setFixedSize(400, 70)
-    progressWidget.setWindowIcon(QIcon(join(addon_path, 'icons', 'mia.png')))
+    progressWidget.setWindowIcon(QIcon(join(addon_path, 'icons', 'migaku.png')))
     progressWidget.setWindowTitle("Generating Definitions...")
     progressWidget.setWindowModality(Qt.ApplicationModal)
     bar = QProgressBar(progressWidget)
@@ -926,7 +931,7 @@ def downloadForvoAudio( urls, howMany):
 
 
 def closeBar(event):
-    mw.MIAExportingDefinitions = False
+    mw.MigakuExportingDefinitions = False
     event.accept()
 
 
@@ -943,9 +948,9 @@ def exportDefinitions(og, dest, addType, dictNs, howMany, notes, generateWidget,
     fb = config['frontBracket']
     bb = config['backBracket']
     lang = mw.addonManager.getConfig(__name__)['ForvoLanguage']
-    mw.MIAExportingDefinitions = True
+    mw.MigakuExportingDefinitions = True
     for nid in notes:
-        if not mw.MIAExportingDefinitions:
+        if not mw.MigakuExportingDefinitions:
             break
         note = mw.col.getNote(nid)
         fields = mw.col.models.fieldNames(note.model())
@@ -996,9 +1001,9 @@ def setupMenu(browser):
     browser.form.menuEdit.addAction(a)
 
 def closeDictionary():
-    if mw.miaDictionary and mw.miaDictionary.isVisible():
-        mw.miaDictionary.saveSizeAndPos()
-        mw.miaDictionary.hide()
+    if mw.migakuDictionary and mw.migakuDictionary.isVisible():
+        mw.migakuDictionary.saveSizeAndPos()
+        mw.migakuDictionary.hide()
         mw.openMiDict.setText("Open Dictionary (Ctrl+W)")
 
 def checkInstalledDicts():
@@ -1019,36 +1024,36 @@ addHook("browser.setupMenus", setupMenu)
 
 def bridgeReroute(self, cmd):
     if cmd == "bodyClick":
-        if mw.miaDictionary and mw.miaDictionary.isVisible() and self.note:
+        if mw.migakuDictionary and mw.migakuDictionary.isVisible() and self.note:
             widget = type(self.widget.parentWidget()).__name__
             if widget == 'QWidget':
                 widget = 'Browser'
             target = getTarget(widget)
-            mw.miaDictionary.dict.setCurrentEditor(self, target)
+            mw.migakuDictionary.dict.setCurrentEditor(self, target)
     else:
         if cmd.startswith("focus"):
             
-            if mw.miaDictionary and mw.miaDictionary.isVisible() and self.note:
+            if mw.migakuDictionary and mw.migakuDictionary.isVisible() and self.note:
                 widget = type(self.widget.parentWidget()).__name__
                 if widget == 'QWidget':
                     widget = 'Browser'
                 target = getTarget(widget)
-                mw.miaDictionary.dict.setCurrentEditor(self, target)
+                mw.migakuDictionary.dict.setCurrentEditor(self, target)
         ogReroute(self, cmd)
     
 ogReroute = aqt.editor.Editor.onBridgeCmd 
 aqt.editor.Editor.onBridgeCmd = bridgeReroute
 
 def setBrowserEditor(browser, c , p):
-    if mw.miaDictionary and mw.miaDictionary.isVisible():
+    if mw.migakuDictionary and mw.migakuDictionary.isVisible():
         if browser.editor.note:
-            mw.miaDictionary.dict.setCurrentEditor(browser.editor, 'Browser')
+            mw.migakuDictionary.dict.setCurrentEditor(browser.editor, 'Browser')
         else:
-            mw.miaDictionary.dict.closeEditor()
+            mw.migakuDictionary.dict.closeEditor()
 
 def checkCurrentEditor(self):
-    if mw.miaDictionary and mw.miaDictionary.isVisible():
-        mw.miaDictionary.dict.checkEditorClose(self.editor)
+    if mw.migakuDictionary and mw.migakuDictionary.isVisible():
+        mw.migakuDictionary.dict.checkEditorClose(self.editor)
 
 Browser._onRowChanged = wrap(Browser._onRowChanged, setBrowserEditor)
 
@@ -1057,8 +1062,8 @@ EditCurrent._saveAndClose = wrap(EditCurrent._saveAndClose, checkCurrentEditor)
 Browser._closeWindow = wrap(Browser._closeWindow, checkCurrentEditor)
 
 def addEditActivated(self, event = False):
-    if mw.miaDictionary and mw.miaDictionary.isVisible():
-        mw.miaDictionary.dict.setCurrentEditor(self.editor, getTarget(type(self).__name__))
+    if mw.migakuDictionary and mw.migakuDictionary.isVisible():
+        mw.migakuDictionary.dict.setCurrentEditor(self.editor, getTarget(type(self).__name__))
 
 bodyClick = '''document.addEventListener("click", function (ev) {
         pycmd("bodyClick")
@@ -1107,7 +1112,7 @@ def getTarget(name):
         return name
 
 def announceParent(self, event = False):
-    if mw.miaDictionary and mw.miaDictionary.isVisible():
+    if mw.migakuDictionary and mw.migakuDictionary.isVisible():
         parent = self.parentWidget().parentWidget().parentWidget()
         pName = gt(parent)
         if gt(parent) not in ['AddCards', 'EditCurrent']:
@@ -1115,7 +1120,7 @@ def announceParent(self, event = False):
             pName = 'Browser'
             if not parent:
                 return
-        mw.miaDictionary.dict.setCurrentEditor(parent.editor, getTarget(pName))
+        mw.migakuDictionary.dict.setCurrentEditor(parent.editor, getTarget(pName))
             
 def addClickToTags(self):
     self.tags.clicked.connect(lambda: announceParent(self))
@@ -1126,8 +1131,8 @@ AddCards.mousePressEvent = addEditActivated
 EditCurrent.mousePressEvent = addEditActivated
 
 def miLinks(self, cmd):
-    if mw.miaDictionary and mw.miaDictionary.isVisible():
-        mw.miaDictionary.dict.setReviewer(self)
+    if mw.migakuDictionary and mw.migakuDictionary.isVisible():
+        mw.migakuDictionary.dict.setReviewer(self)
     return ogLinks(self, cmd)
 
 ogLinks = Reviewer._linkHandler

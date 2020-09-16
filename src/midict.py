@@ -708,7 +708,7 @@ class ClipThread(QObject):
     def run(self):
         if isWin:
             self.listener = self.keyboard.Listener(
-                on_press =self.on_press, on_release= self.on_release, mia = self.mw, suppress= True)
+                on_press =self.on_press, on_release= self.on_release, migaku = self.mw, suppress= True)
         else:
             self.listener = self.keyboard.Listener(
                 on_press =self.on_press, on_release= self.on_release)
@@ -718,7 +718,7 @@ class ClipThread(QObject):
         self.add.emit('add') 
 
     def checkDict(self):
-        if not self.mw.miaDictionary or not self.mw.miaDictionary.isVisible():
+        if not self.mw.migakuDictionary or not self.mw.migakuDictionary.isVisible():
             return False
         return True
 
@@ -826,7 +826,7 @@ class DictInterface(QWidget):
         self.defaultGroups = self.db.getDefaultGroups()
         self.userGroups = self.getUserGroups()
         self.searchOptions = ['Forward', 'Backward', 'Exact', 'Anywhere', 'Definition', 'Example', 'Pronunciation']
-        self.setWindowTitle("Dictionary")
+        self.setWindowTitle("Migaku Dictionary")
         self.dictGroups = self.setupDictGroups()
         self.nightModeToggler = self.setupNightModeToggle()
         self.setSvg(self.nightModeToggler, 'theme')
@@ -856,7 +856,7 @@ class DictInterface(QWidget):
         self.sbOpened = False
         self.historyModel = HistoryModel(self.getHistory(), self)
         self.historyBrowser = HistoryBrowser(self.historyModel, self)
-        self.setWindowIcon(QIcon(join(self.iconpath, 'mia.png'))) 
+        self.setWindowIcon(QIcon(join(self.iconpath, 'migaku.png'))) 
         self.readyToSearch = False
         self.restoreSizePos()
         self.initTooltips()
@@ -950,7 +950,7 @@ class DictInterface(QWidget):
         self.dict.close()
         self.dict.deleteLater()
         self.deleteLater()
-        self.mw.miaDictionary = False
+        self.mw.migakuDictionary = False
         self.mw.openMiDict.setText("Open Dictionary (Ctrl+W)")
         self.saveSizeAndPos()
         if self.dict.addWindow and self.dict.addWindow.window.isVisible():
@@ -1671,7 +1671,7 @@ QScrollBar:vertical {
         subcontrol-origin: margin;
     }'''
 
-class MIASVG(QSvgWidget):
+class MigakuSVG(QSvgWidget):
     clicked=pyqtSignal()
     def __init__(self, parent=None):
         QSvgWidget.__init__(self, parent)

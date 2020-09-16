@@ -1,4 +1,4 @@
-# Contributing to the MIA Dictionary Addon 
+# Contributing to the Migaku Dictionary Addon 
 
 ## Important checks
   - Before create any pull requests, please open a issue explaining the situation

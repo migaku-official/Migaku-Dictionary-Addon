@@ -195,9 +195,9 @@ class Listener(ListenerMixin, _base.Listener):
     #: A pointer to a :class:`KBDLLHOOKSTRUCT`
     _LPKBDLLHOOKSTRUCT = ctypes.POINTER(_KBDLLHOOKSTRUCT)
 
-    def __init__(self, mia = False, *args, **kwargs):
+    def __init__(self, migaku = False, *args, **kwargs):
         super(Listener, self).__init__(*args, **kwargs)
-        self.mia = mia
+        self.migaku = migaku
         self._translator = KeyTranslator()
         self._event_filter = self._options.get(
             'event_filter',

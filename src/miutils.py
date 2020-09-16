@@ -9,16 +9,16 @@ addon_path = dirname(__file__)
 
 def miInfo(text, parent=False, level = 'msg', day = True):
     if level == 'wrn':
-        title = "Dictionary Warning"
+        title = "Migaku Dictionary Warning"
     elif level == 'not':
-        title = "Dictionary Notice"
+        title = "Migaku Dictionary Notice"
     elif level == 'err':
-        title = "Dictionary Error"
+        title = "Migaku Dictionary Error"
     else:
-        title = "Dictionary"
+        title = "Migaku Dictionary"
     if parent is False:
         parent = aqt.mw.app.activeWindow() or aqt.mw
-    icon = QIcon(join(addon_path, 'icons', 'mia.png'))
+    icon = QIcon(join(addon_path, 'icons', 'migaku.png'))
     mb = QMessageBox(parent)
     if not day:
         mb.setStyleSheet(" QMessageBox {background-color: #272828;}")
@@ -36,9 +36,9 @@ def miAsk(text, parent=None, day=True):
 
     msg = QMessageBox(parent)
     # msg.setPalette(nightPalette)
-    msg.setWindowTitle("Dictionary")
+    msg.setWindowTitle("Migaku Dictionary")
     msg.setText(text)
-    icon = QIcon(join(addon_path, 'icons', 'mia.png'))
+    icon = QIcon(join(addon_path, 'icons', 'migaku.png'))
     # msg.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
     b = msg.addButton(QMessageBox.Yes)
     b.setFixedSize(100, 30)
@@ -54,15 +54,3 @@ def miAsk(text, parent=None, day=True):
     else:
         return False
 
-
-# msg = QDialog(parent)
-
-    # msg.setWindowTitle("Dictionary")
-    # label = QLabel(msg)
-    # label.setText(text)
-    # icon = QIcon(join(addon_path, 'icons', 'mia.png'))
-    # # msg.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
-    # msg.setStyleSheet(" QDialog {background-color: #272828;}")
-    # msg.setWindowIcon(icon)
-    # msg.exec_()
-    # msg.accept()

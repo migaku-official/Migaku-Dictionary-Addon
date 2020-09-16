@@ -28,7 +28,7 @@ def attemptOpenLink(cmd):
 
 
 
-class MIASVG(QSvgWidget):
+class MigakuSVG(QSvgWidget):
     clicked=pyqtSignal()
     def __init__(self, parent=None):
         QSvgWidget.__init__(self, parent)
@@ -36,7 +36,7 @@ class MIASVG(QSvgWidget):
     def mousePressEvent(self, ev):
         self.clicked.emit()
 
-class MIALabel(QLabel):
+class MigakuLabel(QLabel):
     clicked=pyqtSignal()
     def __init__(self, parent=None):
         QLabel.__init__(self, parent)
@@ -53,9 +53,9 @@ class SettingsGui(QTabWidget):
         self.forvoLanguages = ["Afrikaans", "Ancient Greek", "Arabic", "Armenian", "Azerbaijani", "Bashkir", "Basque", "Belarusian", "Bengali", "Bulgarian", "Cantonese", "Catalan", "Chuvash", "Croatian", "Czech", "Danish", "Dutch", "English", "Esperanto", "Estonian", "Finnish", "French", "Galician","German", "Greek", "Hakka", "Hebrew", "Hindi", "Hungarian", "Icelandic", "Indonesian", "Interlingua", "Irish", "Italian", "Japanese", "Kabardian", "Korean", "Kurdish", "Latin", "Latvian", "Lithuanian", "Low German", "Luxembourgish", "Mandarin Chinese", "Mari", "Min Nan", "Northern Sami", "Norwegian Bokmål", "Persian", "Polish", "Portuguese", "Punjabi", "Romanian", "Russian", "Serbian", "Slovak", "Slovenian", "Spanish", "Swedish", "Tagalog", "Tatar", "Thai", "Turkish", "Ukrainian", "Urdu", "Uyghur", "Venetian", "Vietnamese", "Welsh", "Wu Chinese", "Yiddish"]
         self.setMinimumSize(850, 550)
         self.setContextMenuPolicy(Qt.NoContextMenu)
-        self.setWindowTitle("Dictionary Settings (Ver. " + verNumber + ")")
+        self.setWindowTitle("Migaku Dictionary Settings (Ver. " + verNumber + ")")
         self.addonPath = path
-        self.setWindowIcon(QIcon(join(self.addonPath, 'icons', 'mia.png')))
+        self.setWindowIcon(QIcon(join(self.addonPath, 'icons', 'migaku.png')))
         self.addDictGroup = QPushButton('Add Dictionary Group')
         self.addExportTemplate = QPushButton('Add Export Template')
         self.dictGroups = self.getGroupTemplateTable()
@@ -130,13 +130,13 @@ class SettingsGui(QTabWidget):
         self.showTarget.setToolTip('Show/Hide the Target Identifier from the dictionary window. The Target Identifier\nlets you know which window is currently selected and will be used when sending\ndefinitions to a target field.')
         self.totalDefs.setToolTip('This is the total maximum number of definitions which the dictionary will output.')
         self.dictDefs.setToolTip('This is the maximum number of definitions which the dictionary will output for any given dictionary.')
-        self.genJSExport.setToolTip('If this is enabled and you have MIA Japanese installed in Anki,\nthen when a card is exported, readings and accent information will automatically be generated for all\nactive fields. This generation is based on your MIA Japanese Sentence Button (文) settings.')
-        self.genJSEdit.setToolTip('If this is enabled and you have MIA Japanese installed in Anki,\nthen when a definition is sent to a field, readings and accent information will automatically be generated for all\nactive fields. This generation is based on your MIA Japanese Sentence Button (文) settings.')
+        self.genJSExport.setToolTip('If this is enabled and you have Migaku Japanese installed in Anki,\nthen when a card is exported, readings and accent information will automatically be generated for all\nactive fields. This generation is based on your Migaku Japanese Sentence Button (文) settings.')
+        self.genJSEdit.setToolTip('If this is enabled and you have Migaku Japanese installed in Anki,\nthen when a definition is sent to a field, readings and accent information will automatically be generated for all\nactive fields. This generation is based on your Migaku Japanese Sentence Button (文) settings.')
         self.frontBracket.setToolTip('This is the text that will be placed in front of each term\n in the dictionary.')
         self.backBracket.setToolTip('This is the text that will be placed after each term\nin the dictionary.')
         self.highlightTarget.setToolTip('The dictionary will highlight the searched term in\nthe search results.')
         self.highlightSentence.setToolTip('The dictionary will highlight example sentences in\nthe search results. This feature is experimental and currently only\nfunctions on Japanese monolingual dictionaries.')
-        self.openOnStart.setToolTip('Enable/Disable launching the MIA Dictionary on profile load.')
+        self.openOnStart.setToolTip('Enable/Disable launching the Migaku Dictionary on profile load.')
         linNote = ''
         self.globalHotkeys.setToolTip('Enable/Disable global hotkeys.' + linNote)
         self.globalOpen.setToolTip('If enabled the dictionary will be opened on a global search.')
@@ -187,8 +187,8 @@ class SettingsGui(QTabWidget):
         nc['openOnGlobal'] = self.globalOpen.isChecked()
         self.mw.addonManager.writeConfig(__name__, nc)
         self.hide()
-        self.mw.refreshMIADictConfig()
-        if self.mw.miaDictionary and self.mw.miaDictionary.isVisible():
+        self.mw.refreshMigakuDictConfig()
+        if self.mw.migakuDictionary and self.mw.migakuDictionary.isVisible():
             miInfo('Please be aware that the dictionary window will not reflect any setting changes until it is closed and reopened.', level='not')
 
     def getGroupTemplateTable(self):
@@ -525,7 +525,7 @@ class SettingsGui(QTabWidget):
         return re.sub(r'l\d+name', '', name)
 
     def getSVGWidget(self,  name):
-        widget = MIASVG(join(self.addonPath, 'icons', name))
+        widget = MigakuSVG(join(self.addonPath, 'icons', name))
         widget.setFixedSize(27,27)
         return widget
 
@@ -551,104 +551,72 @@ class SettingsGui(QTabWidget):
         tab_4 = QWidget()
         tab_4.setObjectName("tab_4")
         tab4vl = QVBoxLayout()
-        miaAbout = QGroupBox()
-        miaAbout.setTitle('Mass Immersion Approach')
-        miaAboutVL = QVBoxLayout()
+        migakuAbout = QGroupBox()
+        migakuAbout.setTitle('Migaku')
+        migakuAboutVL = QVBoxLayout()
 
-        miaAbout.setStyleSheet("QGroupBox { font-weight: bold; } ")
-        miaAboutText = QLabel("This an original MIA add-on. MIA, or “Mass Immersion Approach,” is a comprehensive approach to acquiring foreign languages. You can learn more <a href='https://massimmersionapproach.com'>here</a>.")
-        miaAboutText.setWordWrap(True);
-        miaAboutText.setOpenExternalLinks(True);
-        miaAbout.setLayout(miaAboutVL)
-        miaAboutLinksTitle = QLabel("<b>Links<b>")
-        miaAboutLinksMIA = QLabel("MIA:")
-        miaAboutLinksHL1 = QHBoxLayout()
+        migakuAbout.setStyleSheet("QGroupBox { font-weight: bold; } ")
+        migakuAboutText = QLabel("This an original Migaku add-on. Migaku seeks to be a comprehensive platform for acquiring foreign languages. The official Migaku website will be published soon!")
+        migakuAboutText.setWordWrap(True);
+        migakuAboutText.setOpenExternalLinks(True);
+        migakuAbout.setLayout(migakuAboutVL)
+        migakuAboutLinksTitle = QLabel("<b>Links<b>")
+ 
+        migakuAboutLinksHL3 = QHBoxLayout()
 
-        miaSiteIcon = self.getSVGWidget('MIA.svg')
-        miaSiteIcon.setCursor(QCursor(Qt.PointingHandCursor))
 
-        miaFBIcon = self.getSVGWidget('Facebook.svg')
-        miaFBIcon.setCursor(QCursor(Qt.PointingHandCursor))
+        migakuInfo = QLabel("Migaku:")
+        migakuInfoYT = self.getSVGWidget('Youtube.svg')
+        migakuInfoYT.setCursor(QCursor(Qt.PointingHandCursor))
 
-        miaPatreonIcon = self.getSVGWidget('Patreon.svg')
-        miaPatreonIcon.setCursor(QCursor(Qt.PointingHandCursor))
+        migakuInfoTW = self.getSVGWidget('Twitter.svg')
+        migakuInfoTW.setCursor(QCursor(Qt.PointingHandCursor))
 
-        miaAboutLinksHL1.addWidget(miaAboutLinksMIA)
-        miaAboutLinksHL1.addWidget(miaSiteIcon)
-        miaAboutLinksHL1.addWidget(miaFBIcon)
-        miaAboutLinksHL1.addWidget(miaPatreonIcon)
-        miaAboutLinksHL1.addStretch()
-        miaAboutLinksHL2 = QHBoxLayout()
-        miaAboutLinksHL3 = QHBoxLayout()
 
-        matt = QLabel("Matt vs. Japan:")
-        mattYT = MIALabel()
+        migakuPatreonIcon = self.getSVGWidget('Patreon.svg')
+        migakuPatreonIcon.setCursor(QCursor(Qt.PointingHandCursor))
+        migakuAboutLinksHL3.addWidget(migakuInfo)
+        migakuAboutLinksHL3.addWidget(migakuInfoYT)
+        migakuAboutLinksHL3.addWidget(migakuInfoTW)
+        migakuAboutLinksHL3.addWidget(migakuPatreonIcon)
+        migakuAboutLinksHL3.addStretch()
 
-        mattYT = self.getSVGWidget('Youtube.svg')
-        mattYT.setCursor(QCursor(Qt.PointingHandCursor))
-            
-        mattTW = self.getSVGWidget('Twitter.svg')
-        mattTW.setCursor(QCursor(Qt.PointingHandCursor))
-
-        miaAboutLinksHL2.addWidget(matt)
-        miaAboutLinksHL2.addWidget(mattYT)
-        miaAboutLinksHL2.addWidget(mattTW)
-        miaAboutLinksHL2.addStretch()
-
-        yoga = QLabel("Yoga MIA:")
-        yogaYT = self.getSVGWidget('Youtube.svg')
-        yogaYT.setCursor(QCursor(Qt.PointingHandCursor))
-
-        yogaTW = self.getSVGWidget('Twitter.svg')
-        yogaTW.setCursor(QCursor(Qt.PointingHandCursor))
-
-        miaAboutLinksHL3.addWidget(yoga)
-        miaAboutLinksHL3.addWidget(yogaYT)
-        miaAboutLinksHL3.addWidget(yogaTW)
-        miaAboutLinksHL3.addStretch()
-
-        miaAboutVL.addWidget(miaAboutText)
-        miaAboutVL.addWidget(miaAboutLinksTitle)
-        miaAboutVL.addLayout(miaAboutLinksHL1)
-        miaAboutVL.addLayout(miaAboutLinksHL2)
-        miaAboutVL.addLayout(miaAboutLinksHL3)
+        migakuAboutVL.addWidget(migakuAboutText)
+        migakuAboutVL.addWidget(migakuAboutLinksTitle)
+        migakuAboutVL.addLayout(migakuAboutLinksHL3)
         
-        miaContact = QGroupBox()
-        miaContact.setTitle('Contact Us')
-        miaContactVL = QVBoxLayout()
-        miaContact.setStyleSheet("QGroupBox { font-weight: bold; } ")
-        miaContactText = QLabel("If you would like to report a bug or contribute to the add-on, the best way to do so is by starting a ticket or pull request on GitHub. If you are looking for personal assistance using the add-on, check out the MIA Patreon Discord Server.")
-        miaContactText.setWordWrap(True)
+        migakuContact = QGroupBox()
+        migakuContact.setTitle('Contact Us')
+        migakuContactVL = QVBoxLayout()
+        migakuContact.setStyleSheet("QGroupBox { font-weight: bold; } ")
+        migakuContactText = QLabel("If you would like to report a bug or contribute to the add-on, the best way to do so is by starting a ticket or pull request on GitHub. If you are looking for personal assistance using the add-on, check out the Migaku Patreon Discord Server.")
+        migakuContactText.setWordWrap(True)
 
         gitHubIcon = self.getSVGWidget('Github.svg')
         gitHubIcon.setCursor(QCursor(Qt.PointingHandCursor))
         
-        miaThanks = QGroupBox()
-        miaThanks.setTitle('A Word of Thanks')
-        miaThanksVL = QVBoxLayout()
-        miaThanks.setStyleSheet("QGroupBox { font-weight: bold; } ")
-        miaThanksText = QLabel("We would not have been able to develop this add-on without the support our  <a href='https://www.patreon.com/join/massimmersionapproach?'>patrons</a>. Special thanks to Harrison D, Rafael C, Isaac, Jean-Felix M, Shaquille G, Zdennis, Tj B, Daniel L, Grinners, Garrett H, Mirzhan I, Matt S, Abdulrazzaq A, Darwish, Stian F, Aaron G, Stephen K, Keith W, Jermal, Jacob R, Renfred H, Luvoir, David L, David J, Stein E, Eric J M, and everyone else who supports MIA on Patreon!")
-        miaThanksText.setOpenExternalLinks(True);
-        miaThanksText.setWordWrap(True);
-        miaThanksVL.addWidget(miaThanksText)
+        migakuThanks = QGroupBox()
+        migakuThanks.setTitle('A Word of Thanks')
+        migakuThanksVL = QVBoxLayout()
+        migakuThanks.setStyleSheet("QGroupBox { font-weight: bold; } ")
+        migakuThanksText = QLabel("Thanks so much to all Migaku supporters! I would not have been able to develop this add-on or any other Migaku project without your support!")
+        migakuThanksText.setOpenExternalLinks(True);
+        migakuThanksText.setWordWrap(True);
+        migakuThanksVL.addWidget(migakuThanksText)
 
-        miaContactVL.addWidget(miaContactText)
-        miaContactVL.addWidget(gitHubIcon)
-        miaContact.setLayout(miaContactVL)
-        miaThanks.setLayout(miaThanksVL)
-        tab4vl.addWidget(miaAbout)
-        tab4vl.addWidget(miaContact)
-        tab4vl.addWidget(miaThanks)
+        migakuContactVL.addWidget(migakuContactText)
+        migakuContactVL.addWidget(gitHubIcon)
+        migakuContact.setLayout(migakuContactVL)
+        migakuThanks.setLayout(migakuThanksVL)
+        tab4vl.addWidget(migakuAbout)
+        tab4vl.addWidget(migakuContact)
+        tab4vl.addWidget(migakuThanks)
         tab4vl.addStretch()
         tab_4.setLayout(tab4vl)
 
-        miaSiteIcon.clicked.connect(lambda: openLink('https://massimmersionapproach.com/'))
-        miaFBIcon.clicked.connect(lambda: openLink('https://www.facebook.com/MassImmersionApproach/'))
-        miaPatreonIcon.clicked.connect(lambda: openLink('https://www.patreon.com/massimmersionapproach'))
-        mattYT.clicked.connect(lambda: openLink('https://www.youtube.com/user/MATTvsJapan?sub_confirmation=1'))
-        mattTW.clicked.connect(lambda: openLink('https://twitter.com/mattvsjapan'))
-        yogaYT.clicked.connect(lambda: openLink('https://www.youtube.com/c/yogamia?sub_confirmation=1'))
-        yogaTW.clicked.connect(lambda: openLink('https://twitter.com/Yoga_MIA'))
-        gitHubIcon.clicked.connect(lambda: openLink('https://github.com/mass-immersion-approach'))
+        migakuPatreonIcon.clicked.connect(lambda: openLink('https://www.patreon.com/Migaku'))
+        migakuInfoYT.clicked.connect(lambda: openLink('https://www.youtube.com/c/ImmerseWithYoga'))
+        migakuInfoTW.clicked.connect(lambda: openLink('https://twitter.com/Migaku_Yoga'))
+        gitHubIcon.clicked.connect(lambda: openLink('https://github.com/migaku-official/Migaku-Dictionary-Addon'))
         return tab_4
 

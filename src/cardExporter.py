@@ -81,7 +81,7 @@ class CardExporter():
         self.setColors()
         self.window.setLayout(self.layout)
         self.window.resize(400,400)
-        self.window.setWindowTitle('Card Exporter')
+        self.window.setWindowTitle('Migaku Card Exporter')
         self.definitionList = []
         self.word = ''
         self.sentence = ''
