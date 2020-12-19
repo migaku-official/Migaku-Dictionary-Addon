@@ -141,7 +141,7 @@ class CardExporter():
             self.definitions.setStyleSheet(self.dictInt.getTableStyle())
         
     def addNote(self, note, did):
-        note.model()['did'] = did
+        note.model()['did'] = int(did)
         ret = note.dupeOrEmpty()
         if ret == 1:
             if not miAsk('Your note\'s sorting field will be empty with this configuration. Would you like to continue?', self.window, self.dictInt.nightModeToggler.day):

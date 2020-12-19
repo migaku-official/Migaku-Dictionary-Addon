@@ -26,6 +26,7 @@ from aqt.editcurrent import EditCurrent
 from aqt.browser import Browser
 from aqt.tagedit import TagEdit
 from aqt.reviewer import Reviewer
+from aqt.previewer import Previewer
 from . import googleimages
 from .forvodl import Forvo
 from urllib.request import Request, urlopen
@@ -1034,6 +1035,7 @@ def bridgeReroute(self, cmd):
             ogReroute(self, cmd)
     else:
         if cmd.startswith("focus"):
+            
             if mw.migakuDictionary and mw.migakuDictionary.isVisible() and self.note:
                 widget = type(self.widget.parentWidget()).__name__
                 if widget == 'QWidget':
@@ -1088,12 +1090,12 @@ def addHotkeys(self):
 
 
 def addHotkeysToPreview(self):
-    self._previewWeb.hotkeyS = QShortcut(QKeySequence("Ctrl+S"), self._previewWeb)
-    self._previewWeb.hotkeyS.activated.connect(lambda: searchTerm(self._previewWeb))
-    self._previewWeb.hotkeyW = QShortcut(QKeySequence("Ctrl+W"), self._previewWeb)
-    self._previewWeb.hotkeyW.activated.connect(dictionaryInit)
+    self._web.hotkeyS = QShortcut(QKeySequence("Ctrl+S"), self._web)
+    self._web.hotkeyS.activated.connect(lambda: searchTerm(self._web))
+    self._web.hotkeyW = QShortcut(QKeySequence("Ctrl+W"), self._web)
+    self._web.hotkeyW.activated.connect(dictionaryInit)
 
-Browser._openPreview = wrap(Browser._openPreview, addHotkeysToPreview)
+Previewer.open = wrap(Previewer.open, addHotkeysToPreview)
 
 
 def addEditorFunctionality(self):
@@ -1112,7 +1114,6 @@ def getTarget(name):
     elif name == 'Browser':
         return name
 
-
 def announceParent(self, event = False):
     if mw.migakuDictionary and mw.migakuDictionary.isVisible():
         parent = self.parentWidget().parentWidget().parentWidget()
@@ -1126,8 +1127,6 @@ def announceParent(self, event = False):
             
 def addClickToTags(self):
     self.tags.clicked.connect(lambda: announceParent(self))
-
-
 
 TagEdit.focusInEvent = wrap(TagEdit.focusInEvent, announceParent)
 aqt.editor.Editor.setupWeb = wrap(aqt.editor.Editor.setupWeb, addEditorFunctionality)
