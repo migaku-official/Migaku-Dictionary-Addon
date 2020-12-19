@@ -1,4 +1,4 @@
-<h2 align="center">MIA Dictionary Addon</h2>
+<h2 align="center">Migaku Dictionary Addon</h2>
 
 <p align="center">
 <a title="Rate on AnkiWeb" href="https://ankiweb.net/shared/info/1655992655"><img src="https://glutanimate.com/logos/ankiweb-rate.svg"></a>

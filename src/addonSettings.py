@@ -20,7 +20,7 @@ from .addTemplate import TemplateEditor
 from .miutils import miInfo, miAsk
 
 
-verNumber = "1.1.03"
+verNumber = "1.1.031"
 
 def attemptOpenLink(cmd):
     if cmd.startswith('openLink:'):

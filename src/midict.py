@@ -532,6 +532,8 @@ class MIDict(AnkiWebView):
                 self.reviewer._showAnswer()
             elif self.reviewer.state == 'question':
                 self.reviewer._showQuestion()
+            if hasattr(self.dictInt.mw, "migakuReloadEditorAndBrowser"):
+                self.dictInt.mw.migakuReloadEditorAndBrowser(note)
         if self.currentEditor and self.currentEditor.note:
             if name == 'Google Images':
                 tFields = self.dictInt.getConfig()['GoogleImageFields']

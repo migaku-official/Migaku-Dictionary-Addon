@@ -32,6 +32,8 @@
     "fontSizes": [12, 22],
     "tooltips" : true,
     "globalHotkeys" : true,
-    "openOnGlobal" : true
+    "openOnGlobal" : true,
+    "lastId": false, 
+    "displayAgain": true
 
 }

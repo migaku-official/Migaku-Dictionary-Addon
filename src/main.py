@@ -44,7 +44,7 @@ currentField = False
 currentKey = False
 wrapperDict = False
 tmpdir = join(addon_path, 'temp')
-
+mw.migakuEditorLoadedAfterDictionary = False
 
 
 
@@ -1030,9 +1030,10 @@ def bridgeReroute(self, cmd):
                 widget = 'Browser'
             target = getTarget(widget)
             mw.migakuDictionary.dict.setCurrentEditor(self, target)
+        if hasattr(mw, "migakuEditorLoaded"):
+            ogReroute(self, cmd)
     else:
         if cmd.startswith("focus"):
-            
             if mw.migakuDictionary and mw.migakuDictionary.isVisible() and self.note:
                 widget = type(self.widget.parentWidget()).__name__
                 if widget == 'QWidget':
@@ -1106,10 +1107,11 @@ def gt(obj):
 def getTarget(name):
     if name == 'AddCards':
         return 'Add'
-    elif name == "EditCurrent":
+    elif name == "EditCurrent" or name == "MigakuEditCurrent":
         return 'Edit'
     elif name == 'Browser':
         return name
+
 
 def announceParent(self, event = False):
     if mw.migakuDictionary and mw.migakuDictionary.isVisible():
@@ -1124,6 +1126,8 @@ def announceParent(self, event = False):
             
 def addClickToTags(self):
     self.tags.clicked.connect(lambda: announceParent(self))
+
+
 
 TagEdit.focusInEvent = wrap(TagEdit.focusInEvent, announceParent)
 aqt.editor.Editor.setupWeb = wrap(aqt.editor.Editor.setupWeb, addEditorFunctionality)
