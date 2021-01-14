@@ -18,6 +18,7 @@ class DictDB:
         self.conn=sqlite3.connect(db_file, check_same_thread=False)
         self.c = self.conn.cursor()
         self.c.execute("PRAGMA foreign_keys = ON")
+        self.c.execute("PRAGMA case_sensitive_like=ON;")
 
     def connect(self):
         self.oldConnection = self.c
