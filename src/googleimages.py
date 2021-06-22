@@ -7,10 +7,9 @@ import urllib
 from aqt.utils import  showInfo
 from bs4 import BeautifulSoup
 import requests
-from . import Pyperclip
 import time
 import re
-from aqt.qt import QThread, pyqtSignal
+from aqt.qt import  QRunnable, QObject, pyqtSignal
 
 countryCodes = {"Afghanistan" : "countryAF",
 "Albania": "countryAL",
@@ -255,24 +254,30 @@ countryCodes = {"Afghanistan" : "countryAF",
 "Zambia": "countryZM",
 "Zimbabwe": "countryZW"}
 
-class Google(QThread):
-
+class GoogleSignals(QObject):
     resultsFound = pyqtSignal(list)
     noResults = pyqtSignal(str)
+    finished = pyqtSignal()
+
+class Google(QRunnable):
+
+    
+    # finished = pyqtSignal()
 
     def __init__(self):
-        QThread.__init__(self)
+        super(Google, self).__init__()
         self.GOOGLE_SEARCH_URL = "https://www.google.com/search"
         self.term = False
+        self.signals = GoogleSignals()
         self.initSession()
-
 
     def initSession(self):
         self.session = requests.session()
         self.session.headers.update(
             {
-                "User-Agent": "Mozilla/5.0 (X11; Linux x86_64; rv:10.0) \
-                    Gecko/20100101 Firefox/10.0"
+                "User-Agent": 'Mozilla/5.0 (Linux; Android 9; SM-G960F '\
+'Build/PPR1.180610.011; wv) AppleWebKit/537.36 (KHTML, like Gecko) '\
+'Version/4.0 Chrome/74.0.3729.157 Mobile Safari/537.36'
             }
         )
 
@@ -283,7 +288,8 @@ class Google(QThread):
     def run(self):
         if self.term:
             resultList = self.getPreparedResults(self.term, self.idName)
-            self.resultsFound.emit(resultList)
+            self.signals.resultsFound.emit(resultList)
+        self.signals.finished.emit()
 
     def search(self, keyword, maximum, region = False):
         query = self.query_gen(keyword) 
@@ -293,8 +299,11 @@ class Google(QThread):
     def query_gen(self, keyword):
         page = 0
         while True:
+            queryDict = {"q": keyword, "tbm": "isch"}
+            if self.safeSearch:
+                queryDict["safe"] = "active"
             params = urllib.parse.urlencode(
-                {"q": keyword, "tbm": "isch"}
+                queryDict
             )
             if self.region == 'Japan':
                 url = 'https://www.google.co.jp/search'
@@ -306,6 +315,9 @@ class Google(QThread):
     def setSearchRegion(self, region):
         self.region = region
 
+
+    def setSafeSearch(self, safe):
+        self.safeSearch = safe
 
     def getResultsFromRawHtml(self, html):
         pattern = r"AF_initDataCallback[\s\S]+AF_initDataCallback\({key: '[\s\S]+?',[\s\S]+?data:(\[[\s\S]+\])[\s\S]+?<\/script><script id="
@@ -374,7 +386,7 @@ class Google(QThread):
                         finished = True
                         break
             except:
-                self.noResults.emit('The Google Image Dictionary could not establish a connection. Please ensure you are connected to the internet and try again. If you will be without internet for some time, consider using a template that does not include the Google Images Dictionary in order to prevent this message appearing everytime a search is performed. ')
+                self.signals.noResults.emit('The Google Image Dictionary could not establish a connection. Please ensure you are connected to the internet and try again. If you will be without internet for some time, consider using a template that does not include the Google Images Dictionary in order to prevent this message appearing everytime a search is performed. ')
                 return False
             results = self.getResultsFromRawHtml(html)
             if len(results) == 0:

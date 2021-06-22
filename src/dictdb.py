@@ -18,6 +18,7 @@ class DictDB:
         self.conn=sqlite3.connect(db_file, check_same_thread=False)
         self.c = self.conn.cursor()
         self.c.execute("PRAGMA foreign_keys = ON")
+        self.c.execute("PRAGMA case_sensitive_like=ON;")
 
     def connect(self):
         self.oldConnection = self.c
@@ -25,6 +26,7 @@ class DictDB:
         self.conn=sqlite3.connect(db_file)
         self.c = self.conn.cursor()
         self.c.execute("PRAGMA foreign_keys = ON")
+        self.c.execute("PRAGMA case_sensitive_like=ON;")
 
     def reload(self):
         self.c.close()
@@ -43,7 +45,11 @@ class DictDB:
             return None
     
     def deleteDict(self, d):
-        self.c.execute('DELETE FROM dictnames WHERE dictname = ?;', (d,))
+        self.dropTables(d)
+        d_clean = self.cleanDictName(d)
+        self.c.execute('DELETE FROM dictnames WHERE dictname = ?;', (d_clean,))
+        self.commitChanges()
+        self.c.execute("VACUUM;")
        
     def getDictsByLanguage(self, lang):
         lid = self.getLangId(lang)
@@ -58,33 +64,18 @@ class DictDB:
         except:
             return []
 
-    def addDicts(self, dicts, lang, termHeader):
+    def addDict(self, dictname, lang, termHeader):
         lid = self.getLangId(lang)
-        toRemove = []
-        for d in dicts:
-            try:
-                self.c.execute('INSERT INTO dictnames (dictname, lid, fields, addtype, termHeader, duplicateHeader) VALUES (?, ?, "[]", "add", ?, 0);', (d,lid, termHeader))
-                self.createDB(self.formatDictName(lid, d))
-            except:
-                miInfo('The "' + d + '" dictionary cannot be imported. Please remember that every dictionary must have a unique name, amd cannot contain spaces or punctuation characters.', level='err')
-                toRemove.append(d)
-        for rem in toRemove:
-            dicts.remove(rem)
+        self.c.execute('INSERT INTO dictnames (dictname, lid, fields, addtype, termHeader, duplicateHeader) VALUES (?, ?, "[]", "add", ?, 0);', (dictname, lid, termHeader))
+        self.createDB(self.formatDictName(lid, dictname))
         self.commitChanges()
-        return dicts
 
     def formatDictName(self, lid, name):
         return 'l' + str(lid) + 'name' + name
 
-    def deleteLanguages(self, lList, progressWidget, bar, textL):
-        bar.setMaximum(len(lList))
-        for idx ,l in enumerate(lList):
-            textL.setText('Removing the "' + l + '" language and all associated dictionaries.')
-            mw.app.processEvents() 
-            self.dropTables('l' + str(self.getLangId(l)) + 'name%')
-            self.c.execute('DELETE FROM langnames WHERE langname = ?;', (l,))
-            bar.setValue(idx + 1)
-            mw.app.processEvents() 
+    def deleteLanguage(self, langname):
+        self.dropTables('l' + str(self.getLangId(langname)) + 'name%')
+        self.c.execute('DELETE FROM langnames WHERE langname = ?;', (langname,))
         self.commitChanges()
         self.c.execute("VACUUM;")
 
@@ -216,23 +207,24 @@ class DictDB:
                 terms[idx] = '%「%' + terms[idx] + '%」%'
         return terms;
 
-    def deconjugate(self, term, conjugations):
+    def deconjugate(self, terms, conjugations):
         deconjugations = []
-        for c in conjugations:
-            if term.endswith(c['inflected']): 
-                for x in c['dict']:
-                    deinflected = self.rreplace(term, c['inflected'], x, 1)
-                    if 'prefix' in c:
-                        prefix = c['prefix']
-                        if deinflected.startswith(prefix):
-                            deprefixedDeinflected =  deinflected[len(prefix):]
-                            if deprefixedDeinflected not in deconjugations:
-                                deconjugations.append(deprefixedDeinflected)
-                    if deinflected not in deconjugations:
-                        deconjugations.append(deinflected)
-        deconjugations = list(filter(lambda x: len(x) > 1, deconjugations))  
-        deconjugations.insert(0, term)    
-        return deconjugations
+        for term in terms:
+            for c in conjugations:
+                if term.endswith(c['inflected']): 
+                    for x in c['dict']:
+                        deinflected = self.rreplace(term, c['inflected'], x, 1)
+                        if 'prefix' in c:
+                            prefix = c['prefix']
+                            if deinflected.startswith(prefix):
+                                deprefixedDeinflected =  deinflected[len(prefix):]
+                                if deprefixedDeinflected not in deconjugations:
+                                    deconjugations.append(deprefixedDeinflected)
+                        if deinflected not in deconjugations:
+                            deconjugations.append(deinflected)
+        deconjugations = list(filter(lambda x: len(x) > 1, deconjugations))
+        deconjugations = list(set(deconjugations))  
+        return terms + deconjugations
 
     def rreplace(self, s, old, new, occurrence):
         li = s.rsplit(old, occurrence)
@@ -253,6 +245,10 @@ class DictDB:
             column = 'term'
         if sT == 'Exact':
             op = '='
+        terms = [term]
+        terms.append(term.lower())
+        terms.append(term.capitalize())
+        terms = list(set(terms))
         for dic in group:
             if dic['dict'] == 'Google Images':
                 results['Google Images'] = True
@@ -260,12 +256,12 @@ class DictDB:
             elif dic['dict'] == 'Forvo':
                 results['Forvo'] = True
                 continue
-            terms = [term]
+
             if deinflect:
                 if dic['lang'] in alreadyConjTyped:
                     terms = alreadyConjTyped[dic['lang']]
                 elif dic['lang'] in conjugations:
-                    terms = self.deconjugate(term, conjugations[dic['lang']])
+                    terms = self.deconjugate(terms, conjugations[dic['lang']])
                     terms = self.applySearchType(terms, sT)
                     alreadyConjTyped[dic['lang']] = terms
                 else:
@@ -422,6 +418,14 @@ class DictDB:
             return addType
         except:
             return None
+
+    def getDictTermHeader(self, dictname):
+        self.c.execute('SELECT termHeader FROM dictnames WHERE dictname=?', (dictname, ))
+        return self.c.fetchone()[0]
+
+    def setDictTermHeader(self, dictname, termheader):
+        self.c.execute('UPDATE dictnames SET termHeader = ? WHERE dictname=?', (termheader, dictname))
+        self.commitChanges()
 
     def commitChanges(self):
         self.conn.commit()

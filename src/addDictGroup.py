@@ -11,7 +11,6 @@ from anki.utils import isMac, isWin, isLin
 from anki.lang import _
 from aqt.webview import AnkiWebView
 import re
-from . import Pyperclip 
 import os
 from os.path import dirname, join, exists
 from aqt import mw
@@ -21,7 +20,7 @@ from shutil import copyfile
 from operator import itemgetter
 import ntpath
 
-class DictGroupEditor(QWidget):
+class DictGroupEditor(QDialog):
     def __init__(self, mw, parent = None, dictionaries = [], group = False, groupName = False):
         super(DictGroupEditor, self).__init__(parent, Qt.Window)
         self.mw = mw
@@ -51,7 +50,6 @@ class DictGroupEditor(QWidget):
             self.clearGroupEditor()
         self.initHandlers()
         self.initTooltips()
-        self.show()
 
     def initTooltips(self):
         self.groupName.setToolTip('The name of the dictionary group.')

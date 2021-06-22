@@ -3,4 +3,4 @@
 # Also thanks to the creators of the Japanese Pronunciation/Pitch Accent, Japanese Pitch Accent Notes, and pitch accent note button  which I also borrowed marginally from
 #
 
-from . import  main, miUpdater, migakuMessage
+from . import  main, ffmpegInstaller, miUpdater, migakuMessage, miflix, checkForThirtyTwo

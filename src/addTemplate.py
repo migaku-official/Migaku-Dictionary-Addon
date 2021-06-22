@@ -10,12 +10,11 @@ from aqt.utils import openLink, tooltip, showInfo, askUser
 from anki.utils import isMac, isWin, isLin
 from anki.lang import _
 import re
-from . import Pyperclip 
 import os
 from os.path import dirname, join
 from .miutils import miInfo, miAsk
 
-class TemplateEditor(QWidget):
+class TemplateEditor(QDialog):
     def __init__(self, mw, parent = None, dictionaries = [], toEdit = False, tName = False):
         super(TemplateEditor, self).__init__(parent, Qt.Window)
         self.setMinimumSize(QSize(400, 0))
@@ -26,6 +25,8 @@ class TemplateEditor(QWidget):
         self.noteType = QComboBox()
         self.wordField = QComboBox()
         self.sentenceField = QComboBox()
+        self.secondaryField = QComboBox()
+        self.notesField = QComboBox()
         self.imageField = QComboBox()
         self.audioField = QComboBox()
         self.otherDictsField = QComboBox()
@@ -43,7 +44,6 @@ class TemplateEditor(QWidget):
         self.loadTemplateEditor(toEdit, tName, True)
         self.initHandlers()
         self.initTooltips()
-        self.show()
 
     def initTooltips(self):
         self.templateName.setToolTip('The name of the export template.')
@@ -65,6 +65,8 @@ class TemplateEditor(QWidget):
         self.noteType.clear()
         self.wordField.clear()
         self.sentenceField.clear()
+        self.secondaryField.clear()
+        self.notesField.clear()
         self.imageField.clear()
         self.audioField.clear()
         self.otherDictsField.clear()
@@ -93,6 +95,8 @@ class TemplateEditor(QWidget):
         self.templateName.setEnabled(False)
         self.noteType.setCurrentText(t['noteType'])
         self.sentenceField.setCurrentText(t['sentence'])
+        self.secondaryField.setCurrentText(t.get('secondary', "Don't Export"))
+        self.notesField.setCurrentText(t.get('notes', "Don't Export"))
         self.wordField.setCurrentText(t['word'])
         self.imageField.setCurrentText(t['image'])
         if 'audio' in t:
@@ -132,6 +136,8 @@ class TemplateEditor(QWidget):
         exportTemplate = {
         'noteType' : self.noteType.currentText(),
         'sentence' : self.sentenceField.currentText(),
+        'secondary' : self.secondaryField.currentText(),
+        'notes' : self.notesField.currentText(),
         'word' : self.wordField.currentText(),
         'image' : self.imageField.currentText(),
         'audio' :   self.audioField.currentText(),
@@ -201,20 +207,7 @@ class TemplateEditor(QWidget):
         if curNote in self.notesFields:
             fields = self.notesFields[curNote]
             fields.sort()
-            self.sentenceField.clear()
-            self.sentenceField.addItem("Don't Export")
-            self.sentenceField.addItems(fields)
-            self.wordField.clear()
-            self.wordField.addItem("Don't Export")
-            self.wordField.addItems(fields)
-            self.imageField.clear()
-            self.imageField.addItems(fields)
-            self.audioField.clear()
-            self.audioField.addItems(fields)
-            self.otherDictsField.clear()
-            self.otherDictsField.addItems(fields)
-            self.fields.clear()
-            self.fields.addItems(fields)
+            self.loadFieldsValues(fields)
             self.dictFieldsTable.setRowCount(0)
             
     def getNotesFields(self):
@@ -239,21 +232,32 @@ class TemplateEditor(QWidget):
 
             fields = self.notesFields[noteTypes[0]]
             fields.sort()
-            self.sentenceField.clear()
-            self.sentenceField.addItem("Don't Export")
-            self.sentenceField.addItems(fields)
-            self.wordField.clear()
-            self.wordField.addItem("Don't Export")
-            self.wordField.addItems(fields)
-            self.imageField.clear()
-            self.imageField.addItems(fields)
-            self.audioField.clear()
-            self.audioField.addItems(fields)
-            self.otherDictsField.clear()
-            self.otherDictsField.addItems(fields)
-            self.fields.clear()
-            self.fields.addItems(fields)
-            
+            self.loadFieldsValues(fields)
+    
+
+    def loadFieldsValues(self, fields): 
+        self.sentenceField.clear()
+        self.sentenceField.addItem("Don't Export")
+        self.sentenceField.addItems(fields)
+        self.secondaryField.clear()
+        self.secondaryField.addItem("Don't Export")
+        self.secondaryField.addItems(fields)
+        self.notesField.clear()
+        self.notesField.addItem("Don't Export")
+        self.notesField.addItems(fields)
+        self.wordField.clear()
+        self.wordField.addItem("Don't Export")
+        self.wordField.addItems(fields)
+        self.imageField.clear()
+        self.imageField.addItem("Don't Export")
+        self.imageField.addItems(fields)
+        self.audioField.clear()
+        self.audioField.addItem("Don't Export")
+        self.audioField.addItems(fields)
+        self.otherDictsField.clear()
+        self.otherDictsField.addItems(fields)
+        self.fields.clear()
+        self.fields.addItems(fields)    
 
     def setupLayout(self):
         tempNameLay = QHBoxLayout()
@@ -271,10 +275,20 @@ class TemplateEditor(QWidget):
         sentenceLay.addWidget(self.sentenceField)
         self.layout.addLayout(sentenceLay)
 
+        secondaryLay = QHBoxLayout()
+        secondaryLay.addWidget(QLabel('Secondary Field:'))
+        secondaryLay.addWidget(self.secondaryField)
+        self.layout.addLayout(secondaryLay)
+
         wordLay = QHBoxLayout()
         wordLay.addWidget(QLabel('Word Field:'))
         wordLay.addWidget(self.wordField)
         self.layout.addLayout(wordLay)
+
+        notesLay = QHBoxLayout()
+        notesLay.addWidget(QLabel('User Notes:'))
+        notesLay.addWidget(self.notesField)
+        self.layout.addLayout(notesLay)
 
         imageLay = QHBoxLayout()
         imageLay.addWidget(QLabel('Image Field:'))

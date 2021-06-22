@@ -3,7 +3,6 @@
 from os.path import dirname, join, basename, exists, join
 import sys, os, platform, re, subprocess, aqt.utils
 from anki.utils import stripHTML, isWin, isMac, isLin
-from . import Pyperclip 
 from .midict import DictInterface, ClipThread
 import re
 import unicodedata
@@ -26,13 +25,14 @@ from aqt.editcurrent import EditCurrent
 from aqt.browser import Browser
 from aqt.tagedit import TagEdit
 from aqt.reviewer import Reviewer
-from aqt.previewer import Previewer
 from . import googleimages
 from .forvodl import Forvo
 from urllib.request import Request, urlopen
+from aqt.previewer import Previewer
 import requests
 import time
 import os
+
 
 mw.MigakuDictConfig = mw.addonManager.getConfig(__name__)
 mw.MigakuExportingDefinitions = False
@@ -46,15 +46,13 @@ currentKey = False
 wrapperDict = False
 tmpdir = join(addon_path, 'temp')
 mw.migakuEditorLoadedAfterDictionary = False
+mw.MigakuBulkMediaExportWasCancelled = False
 
 
-
-
-
-
-
-
-def refreshMigakuDictConfig():
+def refreshMigakuDictConfig(config = False):
+    if config:
+        mw.MigakuDictConfig = config
+        return
     mw.MigakuDictConfig = mw.addonManager.getConfig(__name__)
 
 mw.refreshMigakuDictConfig = refreshMigakuDictConfig
@@ -62,7 +60,15 @@ mw.refreshMigakuDictConfig = refreshMigakuDictConfig
 def removeTempFiles():
     filelist = [ f for f in os.listdir(tmpdir)]
     for f in filelist:
-        os.remove(os.path.join(tmpdir, f))
+        path = os.path.join(tmpdir, f)
+        try:
+            os.remove(path)
+        except:
+            innerDirFiles = [ df for df in os.listdir(path)]
+            for df in innerDirFiles:
+                innerPath = os.path.join(path, df)
+                os.remove(innerPath)
+            os.rmdir(path)
 
 removeTempFiles()
 
@@ -72,368 +78,6 @@ def migaku(text):
 def showA(ar):
     showInfo(json.dumps(ar, ensure_ascii=False))
 
-def getDirLangs():
-    return [name for name in os.listdir(join(addon_path, "user_files", "dictionaries"))
-            if os.path.isdir(os.path.join(join(addon_path, "user_files", "dictionaries"), name))]
-
-def getDirDicts(dirLang):
-    return [name for name in os.listdir(join(addon_path, "user_files", "dictionaries" , dirLang))
-            if os.path.isdir(os.path.join(join(addon_path, "user_files", "dictionaries", dirLang), name))]
-
-def updateDs(lang, dirDs, dbDs, frequencyDict):
-    notInDb = [item for item in dirDs if item not in dbDs]
-    notInDir = [item for item in dbDs if item not in dirDs]
-    if len(notInDb) > 0:
-        termHeader = getTermHeader(lang)
-        notInDb = mw.miDictDB.addDicts(notInDb, lang, termHeader)
-        for current ,d in enumerate(notInDb):
-            if current == len(notInDb) - 1:
-                getDictFiles(lang, d, frequencyDict, True)
-            else:
-                getDictFiles(lang, d, frequencyDict)
-    if len(notInDir) > 0:
-        lid = str(mw.miDictDB.getLangId(lang))
-        progressWidget, bar, textL = getDeletionProgress()
-        bar.setMaximum(len(notInDir))
-        for idx, d in enumerate(notInDir):
-            textL.setText('Currently removing the "' + d + '" dictionary for the "' + lang + '" language...')
-            mw.app.processEvents() 
-            mw.miDictDB.dropTables('l' + lid + 'name' + d)
-            mw.miDictDB.deleteDict(d)
-            bar.setValue(idx+1)
-            mw.app.processEvents() 
-        mw.miDictDB.commitChanges()
-        mw.miDictDB.c.execute("VACUUM;")
-        progressWidget.hide()
-        miInfo('All dictionaries successfully removed. The database has been updated to reflect the current directory structure.')
-
-
-def natural_sort(l): 
-    convert = lambda text: int(text) if text.isdigit() else text.lower() 
-    alphanum_key = lambda key: [convert(c) for c in re.split('([0-9]+)', key)] 
-    return sorted(l, key=alphanum_key)
-
-def getDeletionProgress():
-    progressWidget = QWidget(None)
-    textDisplay = QLabel()
-    progressWidget.setWindowIcon(QIcon(join(addon_path, 'icons', 'migaku.png')))
-    progressWidget.setWindowTitle("Removing Dictionaries Not Found in Directory...")
-    textDisplay.setText("Removing... ")
-    progressWidget.setFixedSize(500, 100)
-    progressWidget.setWindowModality(Qt.ApplicationModal)
-    bar = QProgressBar(progressWidget)
-    layout = QVBoxLayout()
-    layout.addWidget(textDisplay)
-    layout.addWidget(bar)
-    progressWidget.setLayout(layout) 
-    bar.move(10,10)
-    per = QLabel(bar)
-    per.setAlignment(Qt.AlignCenter)
-    progressWidget.show()
-    progressWidget.setFocus()
-    return progressWidget, bar, textDisplay;
-
-def getProgressWidgetDict(freq = False):
-    progressWidget = QWidget(None)
-    textDisplay = QLabel()
-    fileCounter = QLabel() 
-    progressWidget.setWindowIcon(QIcon(join(addon_path, 'icons', 'migaku.png')))
-    if freq:
-        progressWidget.setWindowTitle("Applying Frequency Data to Dictionary...")
-    else:
-        progressWidget.setWindowTitle("Migaku Dictionary Add-on, Installing Dictionaries...")
-    textDisplay.setText("Importing... ")
-    fileCounter.setText("File...")
-    progressWidget.setFixedSize(500, 100)
-    progressWidget.setWindowModality(Qt.ApplicationModal)
-    bar = QProgressBar(progressWidget)
-    layout = QVBoxLayout()
-    layout.addWidget(textDisplay)
-    layout.addWidget(fileCounter) 
-    layout.addWidget(bar)
-    progressWidget.setLayout(layout) 
-    bar.move(10,10)
-    per = QLabel(bar)
-    per.setAlignment(Qt.AlignCenter)
-    progressWidget.show()
-    progressWidget.setFocus()
-    return progressWidget, bar, textDisplay, fileCounter;
-
-def loadDict(files, lang, dictName, frequencyDict, miDict = False, last = False):
-    global progressBar
-    howMany = len(files)
-    count = 1
-    progressBar, bar, txtD, fileC = getProgressWidgetDict();
-    tableName = 'l' + str(mw.miDictDB.getLangId(lang)) + 'name' + dictName
-    jsonDict = []
-    for file in files:
-        jsonDictPath = join(addon_path, "user_files", "dictionaries" , lang, dictName, file)
-        with open(jsonDictPath, "r", encoding="utf-8") as jsonDictFile:
-            jsonDict += json.loads(jsonDictFile.read())
-    bar.setMinimum(0)
-    total = len(jsonDict)
-    strTotal = str(total)
-    bar.setMaximum(total)
-    txtD.setText("Importing dict: '" + dictName + "' into language:'"+ lang + "'.")
-    freq = False
-    if frequencyDict:
-        freq = True
-        if miDict:
-            jsonDict = organizeDictionaryByFrequency(jsonDict, frequencyDict, dictName, lang, True)
-        else:
-            jsonDict = organizeDictionaryByFrequency(jsonDict, frequencyDict, dictName, lang)
-    for count, entry in enumerate(jsonDict):
-        fileC.setText("Importing word " + str(count) + " of " + strTotal + ".")
-        if miDict:
-            handleMiDictEntry(jsonDict, count, entry, freq)
-        else: 
-            handleYomiDictEntry(jsonDict, count, entry, freq)
-        if count % 5000 == 0:
-            bar.setValue(count)
-            mw.app.processEvents() 
-    mw.miDictDB.importToDict(tableName, jsonDict)
-    bar.setValue(total)
-    progressBar.hide()
-    if last:
-        miInfo('Your dictionaries for the "' + lang + '" language have been successfully imported.')     
-    mw.miDictDB.commitChanges()
-    return
-
-def getAdjustedTerm(term):
-    term = term.replace('\n', '')
-    if len(term) > 1:
-        term = term.replace('=', '')
-    return term
-
-def getAdjustedPronunciation(pronunciation):
-    return pronunciation.replace('\n', '')
-
-def getAdjustedDefinition(definition):
-    definition = definition.replace('<br>','◟')
-    definition = definition.replace('<', '&lt;').replace('>', '&gt;')
-    definition = definition.replace('◟','<br>').replace('\n', '<br>')
-    return re.sub(r'<br>$', '', definition)
-
-def handleMiDictEntry(jsonDict, count, entry, freq = False):
-        starCount = ''
-        frequency = ''
-        if freq:
-            starCount = entry['starCount']
-            frequency = entry['frequency']
-        reading = entry['pronunciation']
-        if reading == '':
-            reading = entry['term']
-        term = getAdjustedTerm(entry['term']) 
-        altTerm = getAdjustedTerm(entry['altterm'])
-        reading = getAdjustedPronunciation(reading)
-        definition = getAdjustedDefinition(entry['definition'])
-        jsonDict[count] = (term, altTerm, reading, entry['pos'], definition, '', '', frequency, starCount)
-
-def handleYomiDictEntry(jsonDict, count, entry, freq = False):
-        starCount = ''
-        frequency = ''
-        if freq:
-            starCount = entry[9]
-            frequency = entry[8]
-        reading = entry[1]
-        if reading == '':
-            reading = entry[0]
-        term = getAdjustedTerm(entry[0])
-        reading = getAdjustedPronunciation(reading)
-        definition = getAdjustedDefinition(', '.join(entry[5]))
-        jsonDict[count] = (term, '', reading, entry[2], definition, '', '', frequency, starCount)
-
-
-def kaner(to_translate, hiraganer = False):
-        hiragana = u"がぎぐげござじずぜぞだぢづでどばびぶべぼぱぴぷぺぽ" \
-                   u"あいうえおかきくけこさしすせそたちつてと" \
-                   u"なにぬねのはひふへほまみむめもやゆよらりるれろ" \
-                   u"わをんぁぃぅぇぉゃゅょっゐゑ"
-        katakana = u"ガギグゲゴザジズゼゾダヂヅデドバビブベボパピプペポ" \
-                   u"アイウエオカキクケコサシスセソタチツテト" \
-                   u"ナニヌネノハヒフヘホマミムメモヤユヨラリルレロ" \
-                   u"ワヲンァィゥェォャュョッヰヱ"
-        if hiraganer:
-            katakana = [ord(char) for char in katakana]
-            translate_table = dict(zip(katakana, hiragana))
-            return to_translate.translate(translate_table)
-        else:
-            hiragana = [ord(char) for char in hiragana]
-            translate_table = dict(zip(hiragana, katakana))
-            return to_translate.translate(translate_table) 
-
-def adjustReading(reading):
-    return kaner(reading)
-
-def organizeDictionaryByFrequency(jsonDict, frequencyDict, dictName, lang, miDict = False):
-    readingHyouki = False
-    if frequencyDict['readingDictionaryType']:
-        readingHyouki = True
-    progressBar, bar, txtD, fileC = getProgressWidgetDict(True);
-    progressBar.setFixedWidth(600)
-    txtD.setText('Applying frequency data for the "' + lang + '" language to the "'+ dictName + '" dictionary.')
-    bar.setMinimum(0)
-    total = len(jsonDict)
-    strTotal = str(total)
-    bar.setMaximum(total)
-    for idx, entry in enumerate(jsonDict):
-        fileC.setText("Adding frequency information: word " + str(idx) + " of " + strTotal + ".")
-        if miDict:
-            if readingHyouki:
-                reading = entry['pronunciation']
-                if reading == '':
-                    reading = entry['term']
-                adjusted = adjustReading(reading)
-            if not readingHyouki and entry['term'] in frequencyDict:
-                jsonDict[idx]['frequency'] = frequencyDict[entry['term']]
-                jsonDict[idx]['starCount'] = getStarCount(jsonDict[idx]['frequency'])
-            elif readingHyouki and entry['term'] in frequencyDict and adjusted in frequencyDict[entry['term']]:
-                jsonDict[idx]['frequency'] = frequencyDict[entry['term']][adjusted]
-                jsonDict[idx]['starCount'] = getStarCount(jsonDict[idx]['frequency'])
-            else:
-                jsonDict[idx]['frequency'] = 999999 
-                jsonDict[idx]['starCount'] = getStarCount(jsonDict[idx]['frequency'])
-            bar.setValue(idx)
-        else:
-            if readingHyouki:
-                reading = entry[1]
-                if reading == '':
-                    reading = entry[0]
-                adjusted = adjustReading(reading)
-            if not readingHyouki and entry[0] in frequencyDict:
-                if len(entry) > 8:
-                    jsonDict[idx][8] = frequencyDict[entry[0]]
-                    jsonDict[idx][9] = getStarCount(jsonDict[idx][8])
-                else: 
-                    jsonDict[idx].append(frequencyDict[entry[0]])
-                    jsonDict[idx].append(getStarCount(jsonDict[idx][8]))
-            elif readingHyouki and entry[0] in frequencyDict and adjusted in frequencyDict[entry[0]]:
-                if len(entry) > 8:
-                    jsonDict[idx][8] = frequencyDict[entry[0]][adjusted]
-                    jsonDict[idx][9] = getStarCount(jsonDict[idx][8])
-                else: 
-                    jsonDict[idx].append(frequencyDict[entry[0]][adjusted])
-                    jsonDict[idx].append(getStarCount(jsonDict[idx][8]))
-            else:
-                if len(entry) > 8:
-                    jsonDict[idx][8] = 999999
-                    jsonDict[idx][9] = ''
-                else: 
-                    jsonDict[idx].append(999999)
-                    jsonDict[idx].append('')
-        if idx % 5000 == 0:
-            bar.setValue(idx)
-            mw.app.processEvents()
-    bar.hide()
-    if miDict:
-        return sorted(jsonDict, key = lambda i: i['frequency'])
-    else:
-        return sorted(jsonDict, key=itemgetter(8))
-
-def getStarCount(freq):
-    if freq < 1501:
-        return '★★★★★'
-    elif freq < 5001:
-        return '★★★★'
-    elif freq < 15001:
-        return '★★★'
-    elif freq < 30001:
-        return '★★'
-    elif freq < 60001:
-        return '★'
-    else:
-        return ''
-
-def yomichanClean(l):
-    return list(filter(lambda x: x.startswith('term_bank_'), l))
-
-def getFrequencyList(lang):
-    filePath = join(addon_path, "user_files", 'dictionaries', lang, "frequency.json")
-    frequencyDict = {}
-    if os.path.exists(filePath):
-        frequencyList = json.load(codecs.open(filePath, 'r', 'utf-8-sig'))
-        if isinstance(frequencyList[0], str):
-            yomi = False
-            frequencyDict['readingDictionaryType'] = False 
-        elif isinstance(frequencyList[0], list) and len(frequencyList[0]) == 2 and isinstance(frequencyList[0][0], str) and isinstance(frequencyList[0][1], str):
-            yomi = True
-            frequencyDict['readingDictionaryType'] = True 
-        else:
-            miInfo('The frequency list you have included seems to be of an incorrect format. Your dictionaries will therefore be imported without frequency information. Please check "frequency.json" and ensure it is of an accepted format and try again.', level='err')
-            return False
-        for idx, f in enumerate(frequencyList):
-            if yomi:
-                if f[0] in frequencyDict:
-                    frequencyDict[f[0]][f[1]] = idx
-                else:
-                    frequencyDict[f[0]] = {}
-                    frequencyDict[f[0]][f[1]] = idx
-            else:
-                frequencyDict[f] = idx
-        return frequencyDict
-    else:
-        return False
-
-def getDictFiles(lang, dictName, frequencyDict, last = False):
-    files = []
-    yomichan = False
-    for file in os.listdir(join(addon_path, "user_files", "dictionaries" , lang, dictName)):
-        if file.endswith(".json"):
-            if not yomichan and file.startswith('term_bank_'):
-                yomichan = True
-                files.append(file)
-            elif not file.startswith('index'):
-                files.append(file)
-    files = natural_sort(files)
-    if not files:
-        return
-    if yomichan:
-        loadDict(yomichanClean(files), lang, dictName, frequencyDict, last = last)
-    else:
-        loadDict(files, lang, dictName, frequencyDict, True, last = last)
-
-def getTermHeader(lang):
-    finalHeader = ['term', 'altterm', 'pronunciation']
-    filePath = join(addon_path, "user_files", 'dictionaries', lang, "header.csv")
-    if os.path.exists(filePath):
-        with open(filePath, "r", encoding="utf-8") as header:
-            termHeader = header.read().split(',')
-        if not (len(termHeader) == 3 and 'term' in termHeader and 'altterm' in termHeader and 'pronunciation' in termHeader):
-            miInfo('The "' + lang + '" folder contains a "termHeader.csv" file that could not be correctly parsed, therefore dictionaries will use the default header. Please ensure the format is correct and try again.', level='err')
-        else:
-            finalHeader = termHeader
-    return json.dumps(finalHeader)
-
-def updateLs(dirls, dbls):
-    inBoth = list(set(dirls).intersection(dbls))
-    notInDb = [item for item in dirls if item not in dbls]
-    notInDir = [item for item in dbls if item not in dirls]
-    if len(notInDb) > 0:
-        mw.miDictDB.addLanguages(notInDb)
-        for lang in notInDb:
-            frequencyDict = getFrequencyList(lang)
-            termHeader = getTermHeader(lang)
-            dicts = getDirDicts(lang)
-            if len(dicts) > 0:
-                dicts = mw.miDictDB.addDicts(dicts, lang, termHeader)
-                for current ,d in enumerate(dicts):
-                    if current == len(dicts) - 1:
-                        getDictFiles(lang, d, frequencyDict, True)
-                    else:
-                        getDictFiles(lang, d, frequencyDict)
-    if len(notInDir) > 0:
-        progressWidget, bar, textL = getDeletionProgress()
-        mw.miDictDB.deleteLanguages(notInDir, progressWidget, bar, textL)
-        miInfo('The following languages have been successfully removed:<br><br>' + ','.join(notInDir))
-    if len(inBoth) > 0:
-        for lang in inBoth:
-            frequencyDict = getFrequencyList(lang)
-            updateDs(lang, getDirDicts(lang), mw.miDictDB.getDictsByLanguage(lang), frequencyDict)
-
-def checkForNewDictDir():
-    dbLangs = mw.miDictDB.getCurrentDbLangs()
-    dirLangs = getDirLangs()
-    updateLs(dirLangs, dbLangs)
 
 dictWidget  = False
 
@@ -502,6 +146,7 @@ def releaseKey(keyList):
 def exportSentence(sentence):
     if mw.migakuDictionary and mw.migakuDictionary.isVisible():
         mw.migakuDictionary.dict.exportSentence(sentence)
+        showCardExporterWindow()
 
 def exportImage(img):
     if mw.migakuDictionary and mw.migakuDictionary.isVisible():
@@ -509,17 +154,87 @@ def exportImage(img):
             mw.migakuDictionary.dict.exportAudio(img)
         else:
             mw.migakuDictionary.dict.exportImage(img)
+        showCardExporterWindow()
+
+def extensionBulkTextExport(cards):
+    if not mw.migakuDictionary or not mw.migakuDictionary.isVisible(): 
+        mw.dictionaryInit()
+    mw.migakuDictionary.dict.bulkTextExport(cards)
+
+
+def extensionBulkMediaExport(card):
+    if not mw.migakuDictionary or not mw.migakuDictionary.isVisible(): 
+        mw.dictionaryInit()
+    mw.migakuDictionary.dict.bulkMediaExport(card)
+
+
+def cancelBulkMediaExport():
+    if mw.migakuDictionary and mw.migakuDictionary.isVisible(): 
+        mw.migakuDictionary.dict.cancelBulkMediaExport()
+
+
+def extensionCardExport(card):
+    primary = card["primary"]
+    secondary = card["secondary"]
+    image = card["image"]
+    audio = card["audio"]
+    unknownsToSearch = mw.MigakuDictConfig.get("unknownsToSearch", 3)
+    autoExportCards = mw.MigakuDictConfig.get("autoAddCards", False)
+    unknownWords = card["unknownWords"][:unknownsToSearch]
+    if len(unknownWords) > 0:
+        if not autoExportCards:
+            searchTermList(unknownWords)
+        elif not mw.migakuDictionary or not mw.migakuDictionary.isVisible(): 
+            mw.dictionaryInit()
+        mw.migakuDictionary.dict.exportWord(unknownWords[0])
+    else:
+        if not mw.migakuDictionary or not mw.migakuDictionary.isVisible(): 
+                mw.dictionaryInit()
+        mw.migakuDictionary.dict.exportWord('')
+    if audio:
+        mw.migakuDictionary.dict.exportAudio([join(mw.col.media.dir(), audio), '[sound:' + audio +']', audio]) 
+    if image:
+        mw.migakuDictionary.dict.exportImage([join(mw.col.media.dir(), image), image]) 
+    mw.migakuDictionary.dict.exportSentence(primary, secondary)
+    mw.migakuDictionary.dict.addWindow.focusWindow()
+    mw.migakuDictionary.dict.attemptAutoAdd(False)
+    showCardExporterWindow()
+      
+def showCardExporterWindow():
+    adder = mw.migakuDictionary.dict.addWindow
+    cardWindow = adder.scrollArea
+    if not isWin:
+        cardWindow.setWindowState(cardWindow.windowState() & ~Qt.WindowMinimized | Qt.WindowActive)
+        cardWindow.raise_()  
+    else:
+        cardWindow.setWindowFlags(cardWindow.windowFlags() | Qt.WindowStaysOnTopHint)
+        cardWindow.show()
+        if not adder.alwaysOnTop:
+            cardWindow.setWindowFlags(cardWindow.windowFlags() & ~Qt.WindowStaysOnTopHint)
+            cardWindow.show()
 
 def trySearch(term):
     if mw.migakuDictionary and mw.migakuDictionary.isVisible():
         mw.migakuDictionary.initSearch(term)
-    elif mw.MigakuDictConfig['openOnGlobal']:
-        mw.dictionaryInit(term)
+    if not mw.MigakuDictConfig['openOnGlobal']:
+        print("NOT STARTED")
+        mw.dictionaryInit([term])
+    showAfterGlobalSearch()
 
 
+def showAfterGlobalSearch():
+    if not isWin:
+        mw.migakuDictionary.setWindowState(mw.migakuDictionary.windowState() & ~Qt.WindowMinimized | Qt.WindowActive)
+        mw.migakuDictionary.raise_()  
+    else:
+        mw.migakuDictionary.setWindowFlags(mw.migakuDictionary.windowFlags() | Qt.WindowStaysOnTopHint)
+        mw.migakuDictionary.show()
+        if not mw.migakuDictionary.alwaysOnTop:
+            mw.migakuDictionary.setWindowFlags(mw.migakuDictionary.windowFlags() & ~Qt.WindowStaysOnTopHint)
+            mw.migakuDictionary.show()
 
 def attemptAddCard(add):
-    if mw.migakuDictionary and mw.migakuDictionary.isVisible() and mw.migakuDictionary.dict.addWindow and mw.migakuDictionary.dict.addWindow.window.isVisible():
+    if mw.migakuDictionary and mw.migakuDictionary.isVisible() and mw.migakuDictionary.dict.addWindow and mw.migakuDictionary.dict.addWindow.scrollArea.isVisible():
         time.sleep(.3)
         mw.migakuDictionary.dict.addWindow.addCard()
 
@@ -529,7 +244,6 @@ def openDictionarySettings():
         mw.dictSettings = SettingsGui(mw, addon_path, openDictionarySettings)
     mw.dictSettings.show()
     if mw.dictSettings.windowState() == Qt.WindowMinimized:
-            # Window is minimised. Restore it.
            mw.dictSettings.setWindowState(Qt.WindowNoState)
     mw.dictSettings.setFocus()
     mw.dictSettings.activateWindow()
@@ -552,24 +266,21 @@ if isMac:
 else:
     welcomeScreen = getWelcomeScreen()
 
-
-def dictionaryInit(term = False):
+def dictionaryInit(terms = False):
+    if terms and isinstance(terms, str):
+        terms = [terms]
     shortcut = '(Ctrl+W)'
     if isMac:
         shortcut = '⌘W'
     if not mw.migakuDictionary:
-        mw.migakuDictionary = DictInterface(mw, addon_path, welcomeScreen, term = term)
+        mw.migakuDictionary = DictInterface(mw.miDictDB, mw, addon_path, welcomeScreen, terms = terms)
         mw.openMiDict.setText("Close Dictionary " + shortcut)
-    elif mw.migakuDictionary and mw.migakuDictionary.isVisible():
-        mw.migakuDictionary.saveSizeAndPos()
-        mw.migakuDictionary.hide()
-        mw.openMiDict.setText("Open Dictionary "+ shortcut)
+    elif not mw.migakuDictionary.isVisible():
+        mw.migakuDictionary.show()
+        mw.migakuDictionary.resetConfiguration(terms)
+        mw.openMiDict.setText("Close Dictionary " + shortcut)
     else:
-        mw.migakuDictionary.dict.close()
-        mw.migakuDictionary.dict.deleteLater()
-        mw.migakuDictionary.deleteLater()
-        mw.migakuDictionary = DictInterface(mw, addon_path, welcomeScreen, term = term)
-        mw.openMiDict.setText("Close Dictionary "+ shortcut)
+        mw.migakuDictionary.hide()
 
 mw.dictionaryInit = dictionaryInit
 
@@ -603,18 +314,35 @@ def setupGuiMenu():
 
 setupGuiMenu()
 
-
 mw.migakuDictionary = False
 
+def searchTermList(terms):
+    limit = mw.MigakuDictConfig.get("unknownsToSearch", 3)
+    terms = terms[:limit]
+    if not mw.migakuDictionary or not mw.migakuDictionary.isVisible():
+        mw.dictionaryInit(terms)
+    else:
+        for term in terms:
+            mw.migakuDictionary.initSearch(term)
+        showAfterGlobalSearch()
+
+def extensionFileNotFound():
+    miInfo("The media files were not found in your \"Download Directory\", please make sure you have selected the correct directory.")
 
 def initGlobalHotkeys():
     mw.hkThread = ClipThread(mw, addon_path)
     mw.hkThread.sentence.connect(exportSentence)
     mw.hkThread.search.connect(trySearch)
     mw.hkThread.image.connect(exportImage)
+    mw.hkThread.bulkTextExport.connect(extensionBulkTextExport)
     mw.hkThread.add.connect(attemptAddCard)
     mw.hkThread.test.connect(captureKey)
     mw.hkThread.release.connect(releaseKey)
+    mw.hkThread.pageRefreshDuringBulkMediaImport.connect(cancelBulkMediaExport)
+    mw.hkThread.bulkMediaExport.connect(extensionBulkMediaExport)
+    mw.hkThread.extensionCardExport.connect(extensionCardExport)
+    mw.hkThread.searchFromExtension.connect(searchTermList)
+    mw.hkThread.extensionFileNotFound.connect(extensionFileNotFound)
     mw.hkThread.run()
 
 if mw.addonManager.getConfig(__name__)['globalHotkeys']:
@@ -637,7 +365,7 @@ def searchTerm(self):
         text = re.sub(r'\[[^\]]+?\]', '', text)
         text = text.strip()
         if not mw.migakuDictionary or not mw.migakuDictionary.isVisible():
-            dictionaryInit(text)
+            dictionaryInit([text])
         mw.migakuDictionary.ensureVisible()
         mw.migakuDictionary.initSearch(text)
         if self.title == 'main webview':
@@ -705,7 +433,10 @@ def exportDefinitionsWidget(browser):
         dictDict['Forvo'] = 'Forvo'
         dictDict['None'] = 'None'
         ex =  QPushButton('Execute')
-        ex.clicked.connect(lambda: exportDefinitions(origin.currentText(), destination.currentText(), addType.currentText(), [dictDict[dicts.currentText()], dictDict[dict2.currentText()] , dictDict[dict3.currentText()]], howMany.value(), notes, generateWidget, [dicts.currentText(),dict2.currentText(), dict3.currentText()]))
+        ex.clicked.connect(lambda: exportDefinitions(origin.currentText(), destination.currentText(), addType.currentText(), 
+            [dictDict[dicts.currentText()], dictDict[dict2.currentText()] , 
+            dictDict[dict3.currentText()]], howMany.value(), notes, generateWidget, 
+            [dicts.currentText(),dict2.currentText(), dict3.currentText()]))
         destination = QComboBox()
         destination.addItems(fields)
         howMany = QSpinBox()
@@ -753,6 +484,21 @@ def exportDefinitionsWidget(browser):
         generateWidget.setWindowTitle("Migaku Dictionary: Export Definitions")
         generateWidget.setWindowIcon(QIcon(join(addon_path, 'icons', 'migaku.png')))
         generateWidget.setLayout(layout)
+        config = mw.addonManager.getConfig(__name__)
+        savedPreferences = config.get("massGenerationPreferences", False)
+        if savedPreferences:
+            if dicts.findText(savedPreferences["dict1"]) != -1:
+                dicts.setCurrentText(savedPreferences["dict1"])
+            if dict2.findText(savedPreferences["dict2"]) != -1:
+                dict2.setCurrentText(savedPreferences["dict2"])
+            if dict3.findText(savedPreferences["dict3"]) != -1:
+                dict3.setCurrentText(savedPreferences["dict3"])
+            if origin.findText(savedPreferences["origin"]) != -1:
+                origin.setCurrentText(savedPreferences["origin"])
+            if destination.findText(savedPreferences["destination"])  != -1:
+                destination.setCurrentText(savedPreferences["destination"])
+            addType.setCurrentText(savedPreferences["addType"])
+            howMany.setValue(savedPreferences["limit"])
         generateWidget.exec_()
     else:
         miInfo('Please select some cards before attempting to export definitions.', level='not')
@@ -824,7 +570,9 @@ googleImager = None
 def initImager():
     global googleImager
     googleImager = googleimages.Google()
-    googleImager.setSearchRegion(mw.addonManager.getConfig(__name__)['googleSearchRegion'])
+    config = mw.addonManager.getConfig(__name__)
+    googleImager.setSearchRegion(config['googleSearchRegion'])
+    googleImager.setSafeSearch(config["safeSearch"])
 
 def exportGoogleImages(term, howMany):
     config = mw.addonManager.getConfig(__name__)
@@ -936,7 +684,52 @@ def closeBar(event):
     event.accept()
 
 
+def addDefinitionsToCardExporterNote(note, term, dictionaryConfigurations):
+    config = mw.addonManager.getConfig(__name__)
+    fb = config['frontBracket']
+    bb = config['backBracket']
+    lang = config['ForvoLanguage']
+    fields = mw.col.models.fieldNames(note.model())
+    for dictionary in dictionaryConfigurations:
+        tableName = dictionary["tableName"]
+        dictName  = dictionary["dictName"]
+        limit = dictionary["limit"]
+        targetField = dictionary["field"]
+        if targetField in fields:
+            term = re.sub(r'<[^>]+>', '', term) 
+            term = re.sub(r'\[[^\]]+?\]', '', term)
+            if term == '':
+                continue
+            tresults = []
+            if tableName == 'Google Images':
+                tresults.append(exportGoogleImages(term, limit))
+            elif tableName == 'Forvo':
+                tresults.append(exportForvoAudio(term, limit, lang))
+            elif tableName != 'None':
+                dresults, dh, th = mw.miDictDB.getDefForMassExp(term, tableName, str(limit), dictName)
+                tresults.append(formatDefinitions(dresults, th, dh, fb, bb))
+            results = '<br><br>'.join([i for i in tresults if i != ''])
+            if results != "":
+                if note[targetField] == '' or note[targetField] == '<br>':
+                    note[targetField] = results
+                else:
+                    note[targetField] += '<br><br>' + results
+    return note    
+
+mw.addDefinitionsToCardExporterNote = addDefinitionsToCardExporterNote
+
 def exportDefinitions(og, dest, addType, dictNs, howMany, notes, generateWidget, rawNames):
+    config = mw.addonManager.getConfig(__name__)
+    config["massGenerationPreferences"] = {
+        "dict1" : rawNames[0],
+        "dict2" : rawNames[1],
+        "dict3" : rawNames[2],
+        "origin" : og,
+        "destination" : dest,
+        "addType" : addType,
+        "limit" : howMany
+    }
+    mw.addonManager.writeConfig(__name__, config)
     mw.checkpoint('Definition Export')
     if not miAsk('Are you sure you want to export definitions for the "'+ og + '" field into the "' + dest +'" field?'):
         return
@@ -945,10 +738,9 @@ def exportDefinitions(og, dest, addType, dictNs, howMany, notes, generateWidget,
     bar.setMinimum(0)
     bar.setMaximum(len(notes))
     val = 0;
-    config = mw.addonManager.getConfig(__name__)
     fb = config['frontBracket']
     bb = config['backBracket']
-    lang = mw.addonManager.getConfig(__name__)['ForvoLanguage']
+    lang = config['ForvoLanguage']
     mw.MigakuExportingDefinitions = True
     for nid in notes:
         if not mw.MigakuExportingDefinitions:
@@ -1007,11 +799,6 @@ def closeDictionary():
         mw.migakuDictionary.hide()
         mw.openMiDict.setText("Open Dictionary (Ctrl+W)")
 
-def checkInstalledDicts():
-    dicts = mw.miDictDB.getAllDicts()
-    if len(dicts) == 0:
-        miInfo('You currently have 0 dictionaries installed. For instructions on how to install dictionaries, and a link to open source dictionaries in the correct format, please refer to the user guide tab of the settings menu.')
-
 
 addHook("unloadProfile", closeDictionary)
 AnkiWebView.searchTerm = searchTerm
@@ -1019,8 +806,6 @@ AnkiWebView.searchCol = searchCol
 addHook("EditorWebView.contextMenuEvent", addToContextMenu)
 addHook("AnkiWebView.contextMenuEvent", addToContextMenu)
 addHook("profileLoaded", dictOnStart)
-addHook("profileLoaded", checkForNewDictDir)
-addHook("profileLoaded", checkInstalledDicts)
 addHook("browser.setupMenus", setupMenu)
 
 def bridgeReroute(self, cmd):
@@ -1032,7 +817,7 @@ def bridgeReroute(self, cmd):
             target = getTarget(widget)
             mw.migakuDictionary.dict.setCurrentEditor(self, target)
         if hasattr(mw, "migakuEditorLoaded"):
-            ogReroute(self, cmd)
+                ogReroute(self, cmd)
     else:
         if cmd.startswith("focus"):
             
@@ -1094,7 +879,7 @@ def addHotkeysToPreview(self):
     self._web.hotkeyS.activated.connect(lambda: searchTerm(self._web))
     self._web.hotkeyW = QShortcut(QKeySequence("Ctrl+W"), self._web)
     self._web.hotkeyW.activated.connect(dictionaryInit)
-
+    
 Previewer.open = wrap(Previewer.open, addHotkeysToPreview)
 
 
@@ -1141,3 +926,5 @@ def miLinks(self, cmd):
 ogLinks = Reviewer._linkHandler
 Reviewer._linkHandler = miLinks
 Reviewer.show = wrap(Reviewer.show, addBodyClick)
+
+

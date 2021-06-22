@@ -9,7 +9,7 @@ from bs4 import BeautifulSoup
 import requests
 import re
 import base64
-from aqt.qt import QThread, pyqtSignal
+from aqt.qt import QRunnable, QObject, pyqtSignal
 
 languages = {"German" : "de",
  "Tatar" : "tt",
@@ -83,16 +83,23 @@ languages = {"German" : "de",
  "Chuvash" : "cv",
  "Kurdish" : "ku"}
  
+class ForvoSignals(QObject):
+    resultsFound = pyqtSignal(list)
+    noResults = pyqtSignal(str)
+    finished = pyqtSignal()
 
-class Forvo(QThread):
+
+class Forvo(QRunnable):
 
     resultsFound = pyqtSignal(list)
     noResults = pyqtSignal(str)
+    # finished = pyqtSignal()
 
     def __init__(self, language):
-        QThread.__init__(self)
+        super(Forvo, self).__init__()
         self.selLang = language
         self.term = False
+        self.signals = ForvoSignals()
         self.langShortCut = languages[self.selLang]
         self.GOOGLE_SEARCH_URL = "https://forvo.com/word/◳t/#" + self.langShortCut #◳r
         self.session = requests.session()
@@ -110,7 +117,8 @@ class Forvo(QThread):
     def run(self):
         if self.term:
             resultList = [self.attemptFetchForvoLinks(self.term), self.idName]
-            self.resultsFound.emit(resultList)
+            self.signals.resultsFound.emit(resultList)
+        self.signals.finished.emit()
 
 
     def search(self, term, lang = False):
@@ -158,7 +166,7 @@ class Forvo(QThread):
         try:
             html = self.session.get(query_gen).text
         except:
-            self.noResults.emit('The Forvo Dictionary could not be loaded, please confirm that your are connected to the internet and try again. ')
+            self.signals.noResults.emit('The Forvo Dictionary could not be loaded, please confirm that your are connected to the internet and try again. ')
             return []
         results = html
             

@@ -4,6 +4,8 @@
 import aqt
 from aqt.qt import *
 from os.path import dirname, join
+from aqt.webview import AnkiWebView
+
 
 addon_path = dirname(__file__)
 
@@ -31,20 +33,25 @@ def miInfo(text, parent=False, level = 'msg', day = True):
 
     return mb.exec_()
 
-
-def miAsk(text, parent=None, day=True):
+def miAsk(text, parent=None, day=True, customText = False):
 
     msg = QMessageBox(parent)
-    # msg.setPalette(nightPalette)
     msg.setWindowTitle("Migaku Dictionary")
     msg.setText(text)
     icon = QIcon(join(addon_path, 'icons', 'migaku.png'))
-    # msg.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
     b = msg.addButton(QMessageBox.Yes)
+    
     b.setFixedSize(100, 30)
     b.setDefault(True)
     c = msg.addButton(QMessageBox.No)
     c.setFixedSize(100, 30)
+    if customText:
+        b.setText(customText[0])
+        c.setText(customText[1])
+        b.setFixedSize(120, 40)
+        c.setFixedSize(120, 40)
+
+    
     if not day:
         msg.setStyleSheet(" QMessageBox {background-color: #272828;}")
     msg.setWindowIcon(icon)
@@ -53,4 +60,3 @@ def miAsk(text, parent=None, day=True):
         return True
     else:
         return False
-

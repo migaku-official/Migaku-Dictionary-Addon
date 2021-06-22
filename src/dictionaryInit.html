@@ -1012,6 +1012,12 @@ hr{
         return false;
     }
 
+    function closeAllTabs(){
+        for(let i = tabs.length; i> 0; i--){
+            closeTabAtIndex(i - 1)
+        }
+    }
+
     function closeTabAtIndex(index){
         focusAnotherTab(index);
         tabs[index][0].remove();
@@ -1195,7 +1201,6 @@ function addNewTab(html, term = 'Welcome', singleTabMode = false, forvo = false)
                 document.getElementById("defBox").scrollTop = 0;
             }
         }
-
         if(!newTab){
             attemptCloseFirstTab()
             var newTab = fetchNewTab(term);
@@ -1209,9 +1214,6 @@ function addNewTab(html, term = 'Welcome', singleTabMode = false, forvo = false)
             addSidebarListeners(content);
             focusTab(newTab);
         }   
-        
-        
-       
         
         if(sidebarOpened){
             content.getElementsByClassName('definitionSideBar')[0].classList.add('sidebarOpenedSideBar')
@@ -1288,6 +1290,19 @@ document.documentElement.addEventListener('keydown', function(e) {
     }
     
 }, false)
+
+
+function awaitPycmdToLoad() {
+    let awaitPycmd = setInterval(() => {
+      if (pycmd) {
+        clearInterval(awaitPycmd);
+        console.log("MigakuDictionaryLoaded");
+        pycmd('MigakuDictionaryLoaded')
+      }
+    }, 5);
+  }
+
+document.addEventListener('DOMContentLoaded', awaitPycmdToLoad, false);
 
     </script>
     <script id="initialValue"></script>

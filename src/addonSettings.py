@@ -11,16 +11,17 @@ from anki.utils import isMac, isWin, isLin
 from anki.lang import _
 from aqt.webview import AnkiWebView
 import re
-from . import Pyperclip 
 import os
 from os.path import dirname, join
 import platform
 from .addDictGroup import DictGroupEditor
 from .addTemplate import TemplateEditor
 from .miutils import miInfo, miAsk
+from . dictionaryManager import DictionaryManagerWidget
+from .ffmpegInstaller import FFMPEGInstaller
 
+verNumber = "1.3.3"
 
-verNumber = "1.2.1"
 
 def attemptOpenLink(cmd):
     if cmd.startswith('openLink:'):
@@ -48,10 +49,15 @@ class SettingsGui(QTabWidget):
     def __init__(self, mw, path, reboot):
         super(SettingsGui, self).__init__()
         self.mw = mw
+        self.ffmpegInstaller = FFMPEGInstaller(self.mw)
         self.reboot = reboot
         self.googleCountries = ["Afghanistan" ,"Albania","Algeria","American Samoa","Andorra","Angola","Anguilla","Antarctica","Antigua and Barbuda","Argentina","Armenia","Aruba","Australia","Austria","Azerbaijan","Bahamas","Bahrain","Bangladesh","Barbados","Belarus","Belgium","Belize","Benin","Bermuda","Bhutan","Bolivia","Bosnia and Herzegovina","Botswana","Bouvet Island","Brazil","British Indian Ocean Territory","Brunei Darussalam","Bulgaria","Burkina Faso","Burundi","Cambodia","Cameroon","Canada","Cape Verde","Cayman Islands","Central African Republic","Chad","Chile","China","Christmas Island","Cocos (Keeling) Islands","Colombia","Comoros","Congo","Congo, the Democratic Republic of the","Cook Islands","Costa Rica","Cote D'ivoire","Croatia (Hrvatska)","Cuba","Cyprus","Czech Republic","Denmark","Djibouti","Dominica","Dominican Republic","East Timor","Ecuador","Egypt","El Salvador","Equatorial Guinea","Eritrea","Estonia","Ethiopia","European Union","Falkland Islands (Malvinas)","Faroe Islands","Fiji","Finland","France","France, Metropolitan","French Guiana","French Polynesia","French Southern Territories","Gabon","Gambia","Georgia","Germany","Ghana","Gibraltar","Greece","Greenland","Grenada","Guadeloupe","Guam","Guatemala","Guinea","Guinea-Bissau","Guyana","Haiti","Heard Island and Mcdonald Islands","Holy See (Vatican City State)","Honduras","Hong Kong","Hungary","Iceland","India","Indonesia","Iran, Islamic Republic of","Iraq","Ireland","Israel","Italy","Jamaica","Japan","Jordan","Kazakhstan","Kenya","Kiribati","Korea, Democratic People's Republic of","Korea, Republic of","Kuwait","Kyrgyzstan","Lao People's Democratic Republic","Latvia","Lebanon","Lesotho","Liberia","Libyan Arab Jamahiriya","Liechtenstein","Lithuania","Luxembourg","Macao","Macedonia, the Former Yugosalv Republic of","Madagascar","Malawi","Malaysia","Maldives","Mali","Malta","Marshall Islands","Martinique","Mauritania","Mauritius","Mayotte","Mexico","Micronesia, Federated States of","Moldova, Republic of","Monaco","Mongolia","Montserrat","Morocco","Mozambique","Myanmar","Namibia","Nauru","Nepal","Netherlands","Netherlands Antilles","New Caledonia","New Zealand","Nicaragua","Niger","Nigeria","Niue","Norfolk Island","Northern Mariana Islands","Norway","Oman","Pakistan","Palau","Palestinian Territory","Panama","Papua New Guinea","Paraguay","Peru","Philippines","Pitcairn","Poland","Portugal","Puerto Rico","Qatar","Reunion","Romania","Russian Federation","Rwanda","Saint Helena","Saint Kitts and Nevis","Saint Lucia","Saint Pierre and Miquelon","Saint Vincent and the Grenadines","Samoa","San Marino","Sao Tome and Principe","Saudi Arabia","Senegal","Serbia and Montenegro","Seychelles","Sierra Leone","Singapore","Slovakia","Slovenia","Solomon Islands","Somalia","South Africa","South Georgia and the South Sandwich Islands","Spain","Sri Lanka","Sudan","Suriname","Svalbard and Jan Mayen","Swaziland","Sweden","Switzerland","Syrian Arab Republic","Taiwan","Tajikistan","Tanzania, United Republic of","Thailand","Togo","Tokelau","Tonga","Trinidad and Tobago","Tunisia","Turkey","Turkmenistan","Turks and Caicos Islands","Tuvalu","Uganda","Ukraine","United Arab Emirates","United Kingdom","United States","United States Minor Outlying Islands","Uruguay","Uzbekistan","Vanuatu","Venezuela","Vietnam","Virgin Islands, British","Virgin Islands, U.S.","Wallis and Futuna","Western Sahara","Yemen","Yugoslavia","Zambia","Zimbabwe"]
         self.forvoLanguages = ["Afrikaans", "Ancient Greek", "Arabic", "Armenian", "Azerbaijani", "Bashkir", "Basque", "Belarusian", "Bengali", "Bulgarian", "Cantonese", "Catalan", "Chuvash", "Croatian", "Czech", "Danish", "Dutch", "English", "Esperanto", "Estonian", "Finnish", "French", "Galician","German", "Greek", "Hakka", "Hebrew", "Hindi", "Hungarian", "Icelandic", "Indonesian", "Interlingua", "Irish", "Italian", "Japanese", "Kabardian", "Korean", "Kurdish", "Latin", "Latvian", "Lithuanian", "Low German", "Luxembourgish", "Mandarin Chinese", "Mari", "Min Nan", "Northern Sami", "Norwegian Bokmål", "Persian", "Polish", "Portuguese", "Punjabi", "Romanian", "Russian", "Serbian", "Slovak", "Slovenian", "Spanish", "Swedish", "Tagalog", "Tatar", "Thai", "Turkish", "Ukrainian", "Urdu", "Uyghur", "Venetian", "Vietnamese", "Welsh", "Wu Chinese", "Yiddish"]
         self.setMinimumSize(850, 550)
+        if not isWin:
+            self.resize(1034, 550)
+        else:
+            self.resize(920, 550)
         self.setContextMenuPolicy(Qt.NoContextMenu)
         self.setWindowTitle("Migaku Dictionary Settings (Ver. " + verNumber + ")")
         self.addonPath = path
@@ -66,10 +72,15 @@ class SettingsGui(QTabWidget):
         self.maxImgWidth.setRange(0, 9999)
         self.maxImgHeight = QSpinBox()
         self.maxImgHeight.setRange(0, 9999)
+        self.safeSearch = QCheckBox()
         self.googleCountry = QComboBox()
         self.googleCountry.addItems(self.googleCountries)
         self.forvoLang = QComboBox()
         self.forvoLang.addItems(self.forvoLanguages)
+        self.condensedAudioDirectoryLabel = QLabel("Condensed Audio Save Location:")
+        self.chooseAudioDirectory = QPushButton("Choose Directory")
+        self.convertToMp3 = QCheckBox()
+        self.dictOnTop = QCheckBox()
         self.showTarget = QCheckBox()
         self.totalDefs = QSpinBox()
         self.totalDefs.setRange(0, 1000)
@@ -92,19 +103,17 @@ class SettingsGui(QTabWidget):
         self.userGuideTab = self.getUserGuideTab()
         self.setupLayout()
         self.addTab(self.settingsTab, "Settings")
+        self.addTab(DictionaryManagerWidget(), "Dictionaries")
         self.addTab(self.userGuideTab, "User Guide")
         self.addTab(self.getAboutTab(), "About")
         self.loadTemplateTable()
         self.loadGroupTable()
         self.initHandlers()
-        self.allDictionaries = self.getDictionaryNames()
-        self.dictEditor = False
-        self.templateEditor = False
         self.loadConfig()
         self.initTooltips()
         self.hotkeyEsc = QShortcut(QKeySequence("Esc"), self)
         self.hotkeyEsc.activated.connect(self.close)
-        self.resize(920, 550)
+        
         self.show()
 
     def hideEvent(self, event):
@@ -140,7 +149,8 @@ class SettingsGui(QTabWidget):
         linNote = ''
         self.globalHotkeys.setToolTip('Enable/Disable global hotkeys.' + linNote)
         self.globalOpen.setToolTip('If enabled the dictionary will be opened on a global search.')
-
+        self.safeSearch.setToolTip('Whether or not to enable Safe Search for Google Images.')
+        self.convertToMp3.setToolTip('When enabled will convert extension WAV files into MP3 files.\nMP3 files are supported across every Anki platform and are much smaller than WAV files.\nWe recommend enabling this option.')
 
     def getConfig(self):
         return self.mw.addonManager.getConfig(__name__)
@@ -164,7 +174,13 @@ class SettingsGui(QTabWidget):
         self.tooltipCB.setChecked(config['tooltips'])
         self.globalHotkeys.setChecked(config['globalHotkeys'])
         self.globalOpen.setChecked(config['openOnGlobal'])
-
+        self.safeSearch.setChecked(config['safeSearch'])
+        self.convertToMp3.setChecked(config['mp3Convert'])
+        self.dictOnTop.setChecked(config['dictAlwaysOnTop'])
+        if config.get('condensedAudioDirectory', False) is not False:
+            self.chooseAudioDirectory.setText(config['condensedAudioDirectory'])
+        else:
+            self.chooseAudioDirectory.setText("Choose Directory")
 
     def saveConfig(self):
         nc = self.getConfig()
@@ -185,11 +201,27 @@ class SettingsGui(QTabWidget):
         nc['tooltips'] = self.tooltipCB.isChecked()
         nc['globalHotkeys'] = self.globalHotkeys.isChecked()
         nc['openOnGlobal'] = self.globalOpen.isChecked()
+        nc['mp3Convert'] = self.convertToMp3.isChecked()
+        nc['safeSearch'] = self.safeSearch.isChecked()
+        nc['dictAlwaysOnTop']  = self.dictOnTop.isChecked()
+        if self.chooseAudioDirectory.text() != "Choose Directory":
+            nc ['condensedAudioDirectory'] = self.chooseAudioDirectory.text()
+        else:
+            nc ['condensedAudioDirectory'] = False
         self.mw.addonManager.writeConfig(__name__, nc)
         self.hide()
         self.mw.refreshMigakuDictConfig()
+        if nc['mp3Convert']:
+            self.ffmpegInstaller.installFFMPEG()
         if self.mw.migakuDictionary and self.mw.migakuDictionary.isVisible():
             miInfo('Please be aware that the dictionary window will not reflect any setting changes until it is closed and reopened.', level='not')
+
+    def updateAudioDirectory(self):
+        directory = str(QFileDialog.getExistingDirectory(None, "Select Condensed Audio Directory"))
+        if directory:
+            self.chooseAudioDirectory.setText(directory)
+        else:
+            self.chooseAudioDirectory.setText("Choose Directory")
 
     def getGroupTemplateTable(self):
         macLin = False
@@ -249,15 +281,8 @@ class SettingsGui(QTabWidget):
         dictGroups = self.getConfig()['DictionaryGroups']
         if groupName in dictGroups:
             group = dictGroups[groupName]  
-            if not self.dictEditor:
-                self.dictEditor = DictGroupEditor(self.mw, self, self.allDictionaries, group, groupName)
-            else:
-                self.dictEditor.loadGroupEditor(group, groupName)
-            self.dictEditor.show()
-            if self.dictEditor.windowState() == Qt.WindowMinimized:
-                self.dictEditor.setWindowState(Qt.WindowNoState)
-            self.dictEditor.setFocus()
-            self.dictEditor.activateWindow()
+            dictEditor = DictGroupEditor(self.mw, self, self.getDictionaryNames(), group, groupName)
+            dictEditor.exec_()
 
     def removeGroup(self, row ):
         if miAsk('Are you sure you would like to remove this dictionary group? This action will happen immediately and is not un-doable.', self):
@@ -314,14 +339,9 @@ class SettingsGui(QTabWidget):
         exportTemplates = self.getConfig()['ExportTemplates']
         if templateName in exportTemplates:
             template = exportTemplates[templateName]  
-            if not self.templateEditor:
-                self.templateEditor = TemplateEditor(self.mw, self, self.allDictionaries, template, templateName)
-            self.templateEditor.loadTemplateEditor(template, templateName)
-            self.templateEditor.show()
-            if self.templateEditor.windowState() == Qt.WindowMinimized:
-                self.templateEditor.setWindowState(Qt.WindowNoState)
-            self.templateEditor.setFocus()
-            self.templateEditor.activateWindow()
+            templateEditor = TemplateEditor(self.mw, self, self.getDictionaryNames(), template, templateName)
+            templateEditor.loadTemplateEditor(template, templateName)
+            templateEditor.exec_()
 
     def getDictionaryNames(self):
         dictList = self.mw.miDictDB.getAllDictsWithLang()
@@ -333,12 +353,15 @@ class SettingsGui(QTabWidget):
         dictionaryList= sorted(dictionaryList, key=str.casefold)
         return dictionaryList
 
+
     def initHandlers(self):
         self.addDictGroup.clicked.connect(self.addGroup)
         self.addExportTemplate.clicked.connect(self.addTemplate)
         self.restoreButton.clicked.connect(self.restoreDefaults)
         self.cancelButton.clicked.connect(self.close)
         self.applyButton.clicked.connect(self.saveConfig)
+        self.chooseAudioDirectory.clicked.connect(self.updateAudioDirectory)
+
 
     def restoreDefaults(self):
         if miAsk('This will remove any export templates and dictionary groups you have created, and is not undoable. Are you sure you would like to restore the default settings?'):
@@ -350,25 +373,13 @@ class SettingsGui(QTabWidget):
             self.reboot()
 
     def addGroup(self):
-        if not self.dictEditor:
-            self.dictEditor = DictGroupEditor(self.mw, self, self.allDictionaries)
-        self.dictEditor.clearGroupEditor(True)
-        self.dictEditor.show()
-        if self.dictEditor.windowState() == Qt.WindowMinimized:
-            self.dictEditor.setWindowState(Qt.WindowNoState)
-        self.dictEditor.setFocus()
-        self.dictEditor.activateWindow()
+        dictEditor = DictGroupEditor(self.mw, self, self.getDictionaryNames())
+        dictEditor.clearGroupEditor(True)
+        dictEditor.exec_()
 
     def addTemplate(self):
-        if not self.templateEditor:
-            self.templateEditor = TemplateEditor(self.mw, self, self.allDictionaries)
-        else:
-            self.templateEditor.loadTemplateEditor()
-        self.templateEditor.show()
-        if self.templateEditor.windowState() == Qt.WindowMinimized:
-            self.templateEditor.setWindowState(Qt.WindowNoState)
-        self.templateEditor.setFocus()
-        self.templateEditor.activateWindow()
+        templateEditor = TemplateEditor(self.mw, self, self.getDictionaryNames())
+        templateEditor.exec_()
 
     def miQLabel(self, text, width):
         label = QLabel(text)
@@ -436,6 +447,10 @@ class SettingsGui(QTabWidget):
         gHLay.addWidget(self.globalHotkeys)
         optLay1.addLayout(gHLay)
 
+        extensionMp3Lay = QHBoxLayout()
+        extensionMp3Lay.addWidget(self.miQLabel("Convert Extension Audio to MP3", 182))
+        extensionMp3Lay.addWidget(self.convertToMp3)
+        optLay1.addLayout(extensionMp3Lay)
 
         globalOpenLay = QHBoxLayout()
         globalOpenLay.addWidget(self.miQLabel('Open on Global Search:', 323))
@@ -469,8 +484,12 @@ class SettingsGui(QTabWidget):
         countryLay.addWidget(self.googleCountry)
         self.googleCountry.setFixedWidth(160)
         optLay2.addLayout(countryLay)
-        # optLay2.addWidget(self.miQLabel('', 100))
 
+        safeLay = QHBoxLayout()
+        safeLay.addWidget(self.miQLabel('Safe Search:', 323))
+        safeLay.addWidget(self.safeSearch)
+        optLay2.addLayout(safeLay)
+        
         maxWidLay = QHBoxLayout()
         maxWidLay.addWidget(self.miQLabel('Maximum Image Width:', 140))
         maxWidLay.addWidget(self.maxImgWidth)
@@ -496,7 +515,19 @@ class SettingsGui(QTabWidget):
         forvoLay.addWidget(self.miQLabel('Forvo Language:', 140))
         forvoLay.addWidget(self.forvoLang)
         optLay3.addLayout(forvoLay)
-        optLay3.addWidget(QLabel(''))
+
+        dictOnTopLay= QHBoxLayout()
+        dictOnTopLay.addWidget(self.miQLabel("Always on Top:", 323))
+        dictOnTopLay.addWidget(self.dictOnTop)
+        optLay3.addLayout(dictOnTopLay)
+
+
+        extensionAudioLay = QHBoxLayout()
+        extensionAudioLay.addWidget(self.condensedAudioDirectoryLabel)
+        self.chooseAudioDirectory.setFixedWidth(100)
+        extensionAudioLay.addWidget(self.chooseAudioDirectory)
+        optLay3.addLayout(extensionAudioLay)
+
 
         optionsLayout.addLayout(optLay1)
         optionsLayout.addStretch()
@@ -544,8 +575,6 @@ class SettingsGui(QTabWidget):
         guide._page.setHtml(html, url)
         guide.setObjectName("tab_4")
         return guide
-
-    
 
     def getAboutTab(self):
         tab_4 = QWidget()
