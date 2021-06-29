@@ -822,12 +822,27 @@ Please review your template and notetype combination."""), level='wrn', day = se
         settingsWidget.deleteLater()
 
     def cleanHTML(self, html):
-        html = html.replace('\n', '')
-        html = html.replace('<p ', '<div ').replace('</p>','</div>').replace('<p>', '<div>')
-        stylePattern = r'\<style[^<]+?\>[^<]+?<\/style\>'
-        metaPattern = r'\<meta[^<]+?\>'
-        html = re.sub(stylePattern, "", html)
-        return re.sub(metaPattern, "", html)
+        # Switch bold style to <b>
+        text = re.sub(r'(<span style=\"[^\"]*?)font-weight:600;(.*?\">.*?</span>)', r'<b>\1\2</b>', text, flags=re.S)
+        text = re.sub(r'(<span style=\"[^\"]*?)font-style:italic;(.*?\">.*?</span>)', r'<i>\1\2</i>', text, flags=re.S)
+        text = re.sub(r'(<span style=\"[^\"]*?)text-decoration: underline;(.*?\">.*?</span>)', r'<u>\1\2</u>', text, flags=re.S)
+
+        # Switch paragraphs to <br>
+        text = re.sub(r'</p>', r'<br />', text, re.S)
+        
+        # Trim unneeded bits
+        text = re.sub(r'.+</head>', r'', text, flags=re.S)
+        text = re.sub(r'(<html[^>]*?>|</html>|<body[^>]*?>|</body>|<p[^>]*?>|<span[^>]*?>|</span>)', r'', text, flags=re.S)
+        text = text.strip()
+
+        # Remove any trailing <br /> (there can be two)
+        text = re.sub(r'<br />$', r'', text)
+        text = re.sub(r'<br />$', r'', text)
+
+        # For debugging
+        #text = html.escape(text)
+        return text
+
 
     def addTextCard(self, card):
         templateName = self.templateCB.currentText()
