@@ -738,13 +738,13 @@ class ClipThread(QObject):
             import ssl  
             ssl._create_default_https_context = ssl._create_unverified_context  
             sys.path.insert(0, join(dirname(__file__), 'keyboardMac'))  
+            from Quartz import CGEventGetIntegerValueField, kCGKeyboardEventKeycode 
+            self.kCGKeyboardEventKeycode = kCGKeyboardEventKeycode  
+            self.CGEventGetIntegerValueField = CGEventGetIntegerValueField  
         elif isLin: 
             sys.path.insert(0, join(dirname(__file__), 'linux'))    
         sys.path.insert(0, join(dirname(__file__))) 
         from pynput import keyboard 
-        from Quartz import CGEventGetIntegerValueField, kCGKeyboardEventKeycode 
-        self.kCGKeyboardEventKeycode = kCGKeyboardEventKeycode  
-        self.CGEventGetIntegerValueField = CGEventGetIntegerValueField  
         super(ClipThread, self).__init__(mw)    
         self.keyboard = keyboard    
         self.addonPath = path   
@@ -758,15 +758,13 @@ class ClipThread(QObject):
         self.release.emit([key])    
         return True 
     def darwinIntercept(self, event_type, event):   
-        print("DARWIN") 
         keycode = self.CGEventGetIntegerValueField(event, self.kCGKeyboardEventKeycode) 
-        print(keycode)  
         if ('Key.cmd' in self.mw.currentlyPressed or 'Key.cmd_r' in self.mw.currentlyPressed)  and "'c'" in self.mw.currentlyPressed and keycode == 2:  
-            print("suppress")   
             self.handleSystemSearch()   
             self.mw.currentlyPressed = []   
             return None 
         return event    
+
     def run(self):  
         if isWin:   
             self.listener = self.keyboard.Listener( 
