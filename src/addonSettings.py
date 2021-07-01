@@ -20,7 +20,7 @@ from .miutils import miInfo, miAsk
 from . dictionaryManager import DictionaryManagerWidget
 from .ffmpegInstaller import FFMPEGInstaller
 
-verNumber = "1.3.3"
+verNumber = "1.3.5"
 
 
 def attemptOpenLink(cmd):
@@ -80,6 +80,7 @@ class SettingsGui(QTabWidget):
         self.condensedAudioDirectoryLabel = QLabel("Condensed Audio Save Location:")
         self.chooseAudioDirectory = QPushButton("Choose Directory")
         self.convertToMp3 = QCheckBox()
+        self.disableCondensedMessages = QCheckBox()
         self.dictOnTop = QCheckBox()
         self.showTarget = QCheckBox()
         self.totalDefs = QSpinBox()
@@ -151,6 +152,7 @@ class SettingsGui(QTabWidget):
         self.globalOpen.setToolTip('If enabled the dictionary will be opened on a global search.')
         self.safeSearch.setToolTip('Whether or not to enable Safe Search for Google Images.')
         self.convertToMp3.setToolTip('When enabled will convert extension WAV files into MP3 files.\nMP3 files are supported across every Anki platform and are much smaller than WAV files.\nWe recommend enabling this option.')
+        self.disableCondensedMessages.setToolTip('Disable messages shown when condensed audio files are successfully created.')
 
     def getConfig(self):
         return self.mw.addonManager.getConfig(__name__)
@@ -176,6 +178,7 @@ class SettingsGui(QTabWidget):
         self.globalOpen.setChecked(config['openOnGlobal'])
         self.safeSearch.setChecked(config['safeSearch'])
         self.convertToMp3.setChecked(config['mp3Convert'])
+        self.disableCondensedMessages.setChecked(config['disableCondensed'])
         self.dictOnTop.setChecked(config['dictAlwaysOnTop'])
         if config.get('condensedAudioDirectory', False) is not False:
             self.chooseAudioDirectory.setText(config['condensedAudioDirectory'])
@@ -202,6 +205,7 @@ class SettingsGui(QTabWidget):
         nc['globalHotkeys'] = self.globalHotkeys.isChecked()
         nc['openOnGlobal'] = self.globalOpen.isChecked()
         nc['mp3Convert'] = self.convertToMp3.isChecked()
+        nc['disableCondensed'] = self.disableCondensedMessages.isChecked()
         nc['safeSearch'] = self.safeSearch.isChecked()
         nc['dictAlwaysOnTop']  = self.dictOnTop.isChecked()
         if self.chooseAudioDirectory.text() != "Choose Directory":
@@ -452,6 +456,11 @@ class SettingsGui(QTabWidget):
         extensionMp3Lay.addWidget(self.convertToMp3)
         optLay1.addLayout(extensionMp3Lay)
 
+        disableCondensedLay = QHBoxLayout()
+        disableCondensedLay.addWidget(self.miQLabel("Disable Condensed Audio Messages:", 182))
+        disableCondensedLay.addWidget(self.disableCondensedMessages)
+        optLay1.addLayout(disableCondensedLay)
+
         globalOpenLay = QHBoxLayout()
         globalOpenLay.addWidget(self.miQLabel('Open on Global Search:', 323))
         globalOpenLay.addWidget(self.globalOpen)
@@ -489,6 +498,8 @@ class SettingsGui(QTabWidget):
         safeLay.addWidget(self.miQLabel('Safe Search:', 323))
         safeLay.addWidget(self.safeSearch)
         optLay2.addLayout(safeLay)
+
+        optLay2.addStretch()
         
         maxWidLay = QHBoxLayout()
         maxWidLay.addWidget(self.miQLabel('Maximum Image Width:', 140))
@@ -527,6 +538,8 @@ class SettingsGui(QTabWidget):
         self.chooseAudioDirectory.setFixedWidth(100)
         extensionAudioLay.addWidget(self.chooseAudioDirectory)
         optLay3.addLayout(extensionAudioLay)
+
+        optLay3.addStretch()
 
 
         optionsLayout.addLayout(optLay1)

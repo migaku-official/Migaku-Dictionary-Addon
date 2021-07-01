@@ -86,6 +86,21 @@ assert js.open(QIODevice.ReadOnly)
 js = bytes(js.readAll()).decode('utf-8')
 
 
+def searchCol(self):
+    text = selectedText(self)
+    performColSearch(text)
+
+
+def performColSearch(text):
+    if text:
+        text = text.strip()
+        browser = aqt.DialogManager._dialogs["Browser"][1]
+        if not browser:
+            mw.onBrowse()
+            browser = aqt.DialogManager._dialogs["Browser"][1]
+        if browser:
+            browser.form.searchEdit.lineEdit().setText(text)
+            browser.onSearchActivated()
 
 mw.currentlyPressed = []
 
@@ -97,6 +112,9 @@ def captureKey(keyList):
     if isWin:
         if 'Key.ctrl_l' in mw.currentlyPressed and "'c'" in mw.currentlyPressed and'Key.space'  in mw.currentlyPressed:
             mw.hkThread.handleSystemSearch()
+            mw.currentlyPressed = []
+        elif 'Key.ctrl_l' in mw.currentlyPressed and "'c'" in mw.currentlyPressed and "'b'"  in mw.currentlyPressed:
+            mw.hkThread.handleColSearch()
             mw.currentlyPressed = []
         elif 'Key.ctrl_l' in mw.currentlyPressed and "'c'" in mw.currentlyPressed and 'Key.alt_l' in mw.currentlyPressed:
             mw.hkThread.handleSentenceExport()
@@ -122,7 +140,7 @@ def captureKey(keyList):
             mw.currentlyPressed = []
     else:
         if ('Key.cmd' in mw.currentlyPressed or 'Key.cmd_r' in mw.currentlyPressed)  and "'c'" in mw.currentlyPressed and "'b'"  in mw.currentlyPressed:
-            mw.hkThread.handleSystemSearch()
+            mw.hkThread.handleColSearch()
             mw.currentlyPressed = []
         elif ('Key.cmd' in mw.currentlyPressed or 'Key.cmd_r' in mw.currentlyPressed) and "'c'" in mw.currentlyPressed and 'Key.ctrl' in mw.currentlyPressed:
             mw.hkThread.handleSentenceExport()
@@ -213,13 +231,12 @@ def showCardExporterWindow():
             cardWindow.setWindowFlags(cardWindow.windowFlags() & ~Qt.WindowStaysOnTopHint)
             cardWindow.show()
 
-def trySearch(term):
-    if mw.migakuDictionary and mw.migakuDictionary.isVisible():
-        mw.migakuDictionary.initSearch(term)
-    if not mw.MigakuDictConfig['openOnGlobal']:
-        print("NOT STARTED")
-        mw.dictionaryInit([term])
-    showAfterGlobalSearch()
+def trySearch(term):    
+    if mw.migakuDictionary and mw.migakuDictionary.isVisible(): 
+        mw.migakuDictionary.initSearch(term)    
+        showAfterGlobalSearch() 
+    elif mw.MigakuDictConfig['openOnGlobal'] and (not mw.migakuDictionary or not mw.migakuDictionary.isVisible()):  
+        mw.dictionaryInit([term])   
 
 
 def showAfterGlobalSearch():
@@ -333,6 +350,7 @@ def initGlobalHotkeys():
     mw.hkThread = ClipThread(mw, addon_path)
     mw.hkThread.sentence.connect(exportSentence)
     mw.hkThread.search.connect(trySearch)
+    mw.hkThread.colSearch.connect(performColSearch)
     mw.hkThread.image.connect(exportImage)
     mw.hkThread.bulkTextExport.connect(extensionBulkTextExport)
     mw.hkThread.add.connect(attemptAddCard)
@@ -377,29 +395,25 @@ def searchTerm(self):
 
 
 
-def searchCol(self):
-    text = selectedText(self)
-    if text:
-        text = text.strip()
-        browser = aqt.DialogManager._dialogs["Browser"][1]
-        if not browser:
-            mw.onBrowse()
-            browser = aqt.DialogManager._dialogs["Browser"][1]
-        if browser:
-            browser.form.searchEdit.lineEdit().setText(text)
-            browser.onSearchActivated()
 
 
 mw.searchTerm = searchTerm
 mw.searchCol = searchCol
 
-mw.hotkeyS = QShortcut(QKeySequence("Ctrl+S"), mw)
-mw.hotkeyS.activated.connect(lambda: searchTerm(mw.web))
+        
+if isMac:   
+    mw.hotkeyS = QShortcut(QKeySequence("Ctrl+D"), mw)  
+else:   
+    mw.hotkeyS = QShortcut(QKeySequence("Ctrl+S"), mw)  
+mw.hotkeyS.activated.connect(lambda: searchTerm(mw.web))    
+mw.hotkeyS = QShortcut(QKeySequence("Ctrl+B"), mw)  
+mw.hotkeyS.activated.connect(lambda: searchCol(mw.web)) 
+
 
 def addToContextMenu(self, m):
-    a = m.addAction("Search (Ctrl+S)")
+    a = m.addAction("Search (Ctrl+S/⌘+D)")
     a.triggered.connect(self.searchTerm)
-    b = m.addAction("Search Collection")
+    b = m.addAction("Search Collection (Ctrl/⌘+B)")
     b.triggered.connect(self.searchCol)
 
 def exportDefinitionsWidget(browser):
@@ -867,16 +881,26 @@ AddCards.addCards = wrap(AddCards.addCards, addEditActivated)
 AddCards.onHistory = wrap(AddCards.onHistory, addEditActivated)
 
 
-def addHotkeys(self):
-    self.parentWindow.hotkeyS = QShortcut(QKeySequence("Ctrl+S"), self.parentWindow)
-    self.parentWindow.hotkeyS.activated.connect(lambda: searchTerm(self.web))
-    self.parentWindow.hotkeyW = QShortcut(QKeySequence("Ctrl+W"), self.parentWindow)
+def addHotkeys(self):   
+    if isMac:   
+        self.parentWindow.hotkeyS = QShortcut(QKeySequence("Ctrl+D"), self.parentWindow)    
+    else:   
+        self.parentWindow.hotkeyS = QShortcut(QKeySequence("Ctrl+S"), self.parentWindow)    
+    self.parentWindow.hotkeyS.activated.connect(lambda: searchTerm(self.web))   
+    self.parentWindow.hotkeyS = QShortcut(QKeySequence("Ctrl+B"), self.parentWindow)    
+    self.parentWindow.hotkeyS.activated.connect(lambda: searchCol(self.web))    
+    self.parentWindow.hotkeyW = QShortcut(QKeySequence("Ctrl+W"), self.parentWindow)    
     self.parentWindow.hotkeyW.activated.connect(dictionaryInit)
 
 
-def addHotkeysToPreview(self):
-    self._web.hotkeyS = QShortcut(QKeySequence("Ctrl+S"), self._web)
+def addHotkeysToPreview(self):  
+    if isMac:   
+        self._web.hotkeyS = QShortcut(QKeySequence("Ctrl+D"), self._web)    
+    else:   
+        self._web.hotkeyS = QShortcut(QKeySequence("Ctrl+S"), self._web)
     self._web.hotkeyS.activated.connect(lambda: searchTerm(self._web))
+    self._web.hotkeyS = QShortcut(QKeySequence("Ctrl+B"), self._web)
+    self._web.hotkeyS.activated.connect(lambda: searchCol(self._web))
     self._web.hotkeyW = QShortcut(QKeySequence("Ctrl+W"), self._web)
     self._web.hotkeyW.activated.connect(dictionaryInit)
     

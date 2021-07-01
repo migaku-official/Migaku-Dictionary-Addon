@@ -721,6 +721,7 @@ class ClipThread(QObject):
     
     sentence = pyqtSignal(str)
     search = pyqtSignal(str)
+    colSearch  = pyqtSignal(str)
     add = pyqtSignal(str)
     image = pyqtSignal(list)
     test = pyqtSignal(list)
@@ -732,35 +733,50 @@ class ClipThread(QObject):
     bulkMediaExport = pyqtSignal(dict)
     pageRefreshDuringBulkMediaImport = pyqtSignal()
 
-    def __init__(self, mw, path):
-        if isMac:
-            import ssl
-            ssl._create_default_https_context = ssl._create_unverified_context
-            sys.path.insert(0, join(dirname(__file__), 'keyboardMac'))
-        elif isLin:
-            sys.path.insert(0, join(dirname(__file__), 'linux'))
-        sys.path.insert(0, join(dirname(__file__)))
-        from pynput import keyboard
-        super(ClipThread, self).__init__(mw)
-        self.keyboard = keyboard
-        self.addonPath = path
-        self.mw = mw
-        self.config = self.mw.addonManager.getConfig(__name__)
-     
-    def on_press(self,key):
-        self.test.emit([key]) 
-    
-    def on_release(self, key):
-        self.release.emit([key])
-        return True
-
-    def run(self):
-        if isWin:
-            self.listener = self.keyboard.Listener(
-                on_press =self.on_press, on_release= self.on_release, migaku = self.mw, suppress= True)
-        else:
-            self.listener = self.keyboard.Listener(
-                on_press =self.on_press, on_release= self.on_release)
+    def __init__(self, mw, path):   
+        if isMac:   
+            import ssl  
+            ssl._create_default_https_context = ssl._create_unverified_context  
+            sys.path.insert(0, join(dirname(__file__), 'keyboardMac'))  
+        elif isLin: 
+            sys.path.insert(0, join(dirname(__file__), 'linux'))    
+        sys.path.insert(0, join(dirname(__file__))) 
+        from pynput import keyboard 
+        from Quartz import CGEventGetIntegerValueField, kCGKeyboardEventKeycode 
+        self.kCGKeyboardEventKeycode = kCGKeyboardEventKeycode  
+        self.CGEventGetIntegerValueField = CGEventGetIntegerValueField  
+        super(ClipThread, self).__init__(mw)    
+        self.keyboard = keyboard    
+        self.addonPath = path   
+        self.mw = mw    
+        self.config = self.mw.addonManager.getConfig(__name__)  
+        
+    def on_press(self,key): 
+        self.test.emit([key])   
+        
+    def on_release(self, key):  
+        self.release.emit([key])    
+        return True 
+    def darwinIntercept(self, event_type, event):   
+        print("DARWIN") 
+        keycode = self.CGEventGetIntegerValueField(event, self.kCGKeyboardEventKeycode) 
+        print(keycode)  
+        if ('Key.cmd' in self.mw.currentlyPressed or 'Key.cmd_r' in self.mw.currentlyPressed)  and "'c'" in self.mw.currentlyPressed and keycode == 2:  
+            print("suppress")   
+            self.handleSystemSearch()   
+            self.mw.currentlyPressed = []   
+            return None 
+        return event    
+    def run(self):  
+        if isWin:   
+            self.listener = self.keyboard.Listener( 
+                on_press =self.on_press, on_release= self.on_release, migaku = self.mw, suppress= True) 
+        elif isMac: 
+            self.listener = self.keyboard.Listener( 
+                on_press =self.on_press, on_release= self.on_release, migaku = self.mw, darwin_intercept= self.darwinIntercept) 
+        else:   
+            self.listener = self.keyboard.Listener( 
+                on_press =self.on_press, on_release= self.on_release)   
         self.listener.start()
 
     def attemptAddCard(self):
@@ -776,6 +792,9 @@ class ClipThread(QObject):
 
     def handleSystemSearch(self):
         self.search.emit(self.mw.app.clipboard().text())
+
+    def handleColSearch(self):
+        self.colSearch.emit(self.mw.app.clipboard().text())
 
     def getConfig(self):
         return self.mw.addonManager.getConfig(__name__)
@@ -926,8 +945,13 @@ class DictInterface(QWidget):
         self.hotkeyEsc.activated.connect(self.hide)
         self.hotkeyW = QShortcut(QKeySequence("Ctrl+W"), self)
         self.hotkeyW.activated.connect(self.mw.dictionaryInit)
-        self.hotkeyS = QShortcut(QKeySequence("Ctrl+S"), self)
+        if isMac:   
+            self.hotkeyS = QShortcut(QKeySequence("Ctrl+D"), self)  
+        else:   
+            self.hotkeyS = QShortcut(QKeySequence("Ctrl+S"), self)
         self.hotkeyS.activated.connect(lambda: self.mw.searchTerm(self.dict._page))
+        self.hotkeyS = QShortcut(QKeySequence("Ctrl+B"), self)
+        self.hotkeyS.activated.connect(lambda: self.mw.searchCol(self.dict._page))
 
     def getFontColor(self, color):
         pal = QPalette()

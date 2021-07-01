@@ -75,7 +75,7 @@ class ImportHandler(MigakuHTTPHandler):
                     os.remove(innerPath)
                 os.rmdir(path)
 
-    def condenseAudioUsingFFMPEG(self, filename, timestamp):
+    def condenseAudioUsingFFMPEG(self, filename, timestamp, config):
         print("FFMPEG REACHED")
         wavDir = join(self.tempDirectory, timestamp)
         if exists(wavDir):
@@ -95,14 +95,15 @@ class ImportHandler(MigakuHTTPHandler):
             import subprocess
             subprocess.call([self.ffmpeg, '-y', '-f', 'concat', '-safe', '0', '-i', wavListFilePath, '-write_xing', '0', mp3path])
             self.removeTempFiles()
-            self.alert( "A Condensed Audio File has been generated.\n\n The file: " + filename + "\nhas been created in dir: " + mp3dir)
+            if not config.get('disableCondensed', False):
+                self.alert( "A Condensed Audio File has been generated.\n\n The file: " + filename + "\nhas been created in dir: " + mp3dir)
 
     def cleanFilename(self, filename):
         return re.sub(r"[\n:'\":/\|?*><!]","", filename).strip()
 
     def post(self):
         if self.checkVersion():
-            
+            config = self.getConfig()
             previousBulkTimeStamp = self.application.settings.get('previousBulkTimeStamp')
             if self.parseBoolean(self.get_body_argument("pageRefreshCancelBulkMediaExporting", default=False)):
                 self.mw.hkThread.handlePageRefreshDuringBulkMediaImport()
@@ -121,7 +122,7 @@ class ImportHandler(MigakuHTTPHandler):
             requestType = self.get_body_argument("type", default=False)
             if requestType == 'finishedRecordingCondensedAudio':
                 filename = self.get_body_argument('filename', default="audio");
-                self.condenseAudioUsingFFMPEG(filename, timestamp)
+                self.condenseAudioUsingFFMPEG(filename, timestamp, config)
                 self.removeCondensedAudioInProgressMessage()
                 return
 
@@ -145,7 +146,6 @@ class ImportHandler(MigakuHTTPHandler):
                 print("TOTAL")
                 print(total)       
                 if condensedAudio:
-                    config = self.getConfig()
                     mp3dir = config.get('condensedAudioDirectory', False)
                     if not mp3dir:
                         self.alert("You must specify a Condensed Audio Save Location.\n\nYou can do this by:\n1. Navigating to Migaku->Dictionary Settings in Anki's menu bar.\n2. Clicking \"Choose Directory\" for the \"Condensed Audio Save Location\"  in the bottom right of the settings window.")

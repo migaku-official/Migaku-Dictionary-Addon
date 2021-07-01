@@ -43,5 +43,6 @@
     "unknownsToSearch" : 3,
     "massGenerationPreferences": false,
     "safeSearch": true,
-    "condensedAudioDirectory" : false
+    "condensedAudioDirectory" : false,
+    "disableCondensed": false
 }
