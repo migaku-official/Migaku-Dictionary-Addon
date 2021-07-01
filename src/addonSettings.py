@@ -20,7 +20,7 @@ from .miutils import miInfo, miAsk
 from . dictionaryManager import DictionaryManagerWidget
 from .ffmpegInstaller import FFMPEGInstaller
 
-verNumber = "1.3.6"
+verNumber = "1.3.7"
 
 
 def attemptOpenLink(cmd):

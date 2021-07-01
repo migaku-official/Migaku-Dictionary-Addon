@@ -821,7 +821,7 @@ Please review your template and notetype combination."""), level='wrn', day = se
         settingsWidget.close()
         settingsWidget.deleteLater()
 
-    def cleanHTML(self, html):
+    def cleanHTML(self, text):
         # Switch bold style to <b>
         text = re.sub(r'(<span style=\"[^\"]*?)font-weight:600;(.*?\">.*?</span>)', r'<b>\1\2</b>', text, flags=re.S)
         text = re.sub(r'(<span style=\"[^\"]*?)font-style:italic;(.*?\">.*?</span>)', r'<i>\1\2</i>', text, flags=re.S)
