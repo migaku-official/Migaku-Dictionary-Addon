@@ -101,6 +101,16 @@ def performColSearch(text):
         if browser:
             browser.form.searchEdit.lineEdit().setText(text)
             browser.onSearchActivated()
+            browser.activateWindow()
+            if not isWin:
+                browser.setWindowState(browser.windowState() & ~Qt.WindowMinimized | Qt.WindowActive)
+                browser.raise_()  
+            else:
+                browser.setWindowFlags(browser.windowFlags() | Qt.WindowStaysOnTopHint)
+                browser.show()
+                browser.setWindowFlags(browser.windowFlags() & ~Qt.WindowStaysOnTopHint)
+                browser.show()
+
 
 mw.currentlyPressed = []
 
@@ -240,6 +250,7 @@ def trySearch(term):
 
 
 def showAfterGlobalSearch():
+    mw.migakuDictionary.activateWindow()
     if not isWin:
         mw.migakuDictionary.setWindowState(mw.migakuDictionary.windowState() & ~Qt.WindowMinimized | Qt.WindowActive)
         mw.migakuDictionary.raise_()  
@@ -292,10 +303,12 @@ def dictionaryInit(terms = False):
     if not mw.migakuDictionary:
         mw.migakuDictionary = DictInterface(mw.miDictDB, mw, addon_path, welcomeScreen, terms = terms)
         mw.openMiDict.setText("Close Dictionary " + shortcut)
+        showAfterGlobalSearch()
     elif not mw.migakuDictionary.isVisible():
         mw.migakuDictionary.show()
         mw.migakuDictionary.resetConfiguration(terms)
         mw.openMiDict.setText("Close Dictionary " + shortcut)
+        showAfterGlobalSearch()
     else:
         mw.migakuDictionary.hide()
 
@@ -392,6 +405,7 @@ def searchTerm(self):
         elif self.title == 'editor':
             target = getTarget(type(self.parentEditor.parentWindow).__name__)
             mw.migakuDictionary.dict.setCurrentEditor(self.parentEditor, target)
+        showAfterGlobalSearch()
 
 
 
@@ -401,19 +415,17 @@ mw.searchTerm = searchTerm
 mw.searchCol = searchCol
 
         
-if isMac:   
-    mw.hotkeyS = QShortcut(QKeySequence("Ctrl+D"), mw)  
-else:   
-    mw.hotkeyS = QShortcut(QKeySequence("Ctrl+S"), mw)  
+ 
+mw.hotkeyS = QShortcut(QKeySequence("Ctrl+S"), mw)  
 mw.hotkeyS.activated.connect(lambda: searchTerm(mw.web))    
-mw.hotkeyS = QShortcut(QKeySequence("Ctrl+B"), mw)  
+mw.hotkeyS = QShortcut(QKeySequence("Ctrl+Shift+B"), mw)  
 mw.hotkeyS.activated.connect(lambda: searchCol(mw.web)) 
 
 
 def addToContextMenu(self, m):
-    a = m.addAction("Search (Ctrl+S/⌘+D)")
+    a = m.addAction("Search (Ctrl+S)")
     a.triggered.connect(self.searchTerm)
-    b = m.addAction("Search Collection (Ctrl/⌘+B)")
+    b = m.addAction("Search Collection (Ctrl/⌘+Shift+B)")
     b.triggered.connect(self.searchCol)
 
 def exportDefinitionsWidget(browser):
@@ -882,24 +894,18 @@ AddCards.onHistory = wrap(AddCards.onHistory, addEditActivated)
 
 
 def addHotkeys(self):   
-    if isMac:   
-        self.parentWindow.hotkeyS = QShortcut(QKeySequence("Ctrl+D"), self.parentWindow)    
-    else:   
-        self.parentWindow.hotkeyS = QShortcut(QKeySequence("Ctrl+S"), self.parentWindow)    
+    self.parentWindow.hotkeyS = QShortcut(QKeySequence("Ctrl+S"), self.parentWindow)    
     self.parentWindow.hotkeyS.activated.connect(lambda: searchTerm(self.web))   
-    self.parentWindow.hotkeyS = QShortcut(QKeySequence("Ctrl+B"), self.parentWindow)    
+    self.parentWindow.hotkeyS = QShortcut(QKeySequence("Ctrl+Shift+B"), self.parentWindow)    
     self.parentWindow.hotkeyS.activated.connect(lambda: searchCol(self.web))    
     self.parentWindow.hotkeyW = QShortcut(QKeySequence("Ctrl+W"), self.parentWindow)    
     self.parentWindow.hotkeyW.activated.connect(dictionaryInit)
 
 
 def addHotkeysToPreview(self):  
-    if isMac:   
-        self._web.hotkeyS = QShortcut(QKeySequence("Ctrl+D"), self._web)    
-    else:   
-        self._web.hotkeyS = QShortcut(QKeySequence("Ctrl+S"), self._web)
+    self._web.hotkeyS = QShortcut(QKeySequence("Ctrl+S"), self._web)
     self._web.hotkeyS.activated.connect(lambda: searchTerm(self._web))
-    self._web.hotkeyS = QShortcut(QKeySequence("Ctrl+B"), self._web)
+    self._web.hotkeyS = QShortcut(QKeySequence("Ctrl+Shift+B"), self._web)
     self._web.hotkeyS.activated.connect(lambda: searchCol(self._web))
     self._web.hotkeyW = QShortcut(QKeySequence("Ctrl+W"), self._web)
     self._web.hotkeyW.activated.connect(dictionaryInit)

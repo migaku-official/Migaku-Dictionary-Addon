@@ -757,9 +757,10 @@ class ClipThread(QObject):
     def on_release(self, key):  
         self.release.emit([key])    
         return True 
+
     def darwinIntercept(self, event_type, event):   
         keycode = self.CGEventGetIntegerValueField(event, self.kCGKeyboardEventKeycode) 
-        if ('Key.cmd' in self.mw.currentlyPressed or 'Key.cmd_r' in self.mw.currentlyPressed)  and "'c'" in self.mw.currentlyPressed and keycode == 2:  
+        if ('Key.cmd' in self.mw.currentlyPressed or 'Key.cmd_r' in self.mw.currentlyPressed)  and "'c'" in self.mw.currentlyPressed and keycode == 1:  
             self.handleSystemSearch()   
             self.mw.currentlyPressed = []   
             return None 
@@ -943,12 +944,9 @@ class DictInterface(QWidget):
         self.hotkeyEsc.activated.connect(self.hide)
         self.hotkeyW = QShortcut(QKeySequence("Ctrl+W"), self)
         self.hotkeyW.activated.connect(self.mw.dictionaryInit)
-        if isMac:   
-            self.hotkeyS = QShortcut(QKeySequence("Ctrl+D"), self)  
-        else:   
-            self.hotkeyS = QShortcut(QKeySequence("Ctrl+S"), self)
+        self.hotkeyS = QShortcut(QKeySequence("Ctrl+S"), self)
         self.hotkeyS.activated.connect(lambda: self.mw.searchTerm(self.dict._page))
-        self.hotkeyS = QShortcut(QKeySequence("Ctrl+B"), self)
+        self.hotkeyS = QShortcut(QKeySequence("Ctrl+Shift+B"), self)
         self.hotkeyS.activated.connect(lambda: self.mw.searchCol(self.dict._page))
 
     def getFontColor(self, color):
