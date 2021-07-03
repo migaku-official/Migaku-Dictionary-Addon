@@ -781,6 +781,10 @@ def exportDefinitions(og, dest, addType, dictNs, howMany, notes, generateWidget,
             tresults = []
             dCount = 0
             for dictN in dictNs:
+                # Skip export if "If Empty" is selected and destination field is not empty
+                if addType == "If Empty" and note[dest] != '':
+                    break
+                    
                 if dictN == 'Google Images':
                     tresults.append(exportGoogleImages( term, howMany))
                 elif dictN == 'Forvo':
