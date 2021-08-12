@@ -24,6 +24,7 @@
 
 1. Install the version of Anki that is listed under the "Migaku Development Cycles" section of the AnkiWeb add-on [page](https://ankiweb.net/shared/info/1655992655)
 2. Download the latest version of the addon from [AnkiWeb](https://ankiweb.net/shared/info/1655992655)
+  - _**Note:** You will need to add "dictionaries" to the addon, which can be found on the [AnkiWeb Addon Page](https://ankiweb.net/shared/info/1655992655) under `Supported Dictionaries`_
 
 ### Contributing
 
